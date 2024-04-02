@@ -1,0 +1,15 @@
+{
+  "phases": [
+    {
+      "sanity": [
+        {
+          "name": "sanity",
+          "module": "com.mellanox.jenkins.generic_modules.RunCmd",
+          "parameters": {
+            "cmd" : "pwd; ls -1; env"
+          }
+        }
+      ]
+    }
+  ]
+}
