@@ -1,7 +1,7 @@
 {
   "phases": [
     {
-      "sanity": [
+      "phase_1": [
         {
           "name": "sanity",
           "module": "com.mellanox.jenkins.generic_modules.RunCmd",

@@ -1,9 +1,9 @@
 pipeline {
   agent {
     kubernetes {
-    cloud "sw-devops-cluster"
-    namespace "devops"
-    yaml """
+      // cloud "il-ipp-blossom-prod"
+      // namespace "nbu-sw-co"
+      yaml """
 apiVersion: v1
 kind: Pod
 spec:
