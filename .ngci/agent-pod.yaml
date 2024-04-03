@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: jnlp
+    image: urm.nvidia.com/sw-switch-devops-docker/jnlp:1.0.3  # TODO: find an up to date image that doesn't "belong" to another team
+    workingDir: /tmp
+    securityContext:
+      runAsUser: 7331  # TODO: recall which user this is
+    resources:
+      requests:
+        memory: "4Gi"  # TODO: try to decrease
+        cpu: "2"
+      limits:
+        memory: "4Gi"
+        cpu: "4"
+    volumeMounts:
+    - mountPath: /auto
+      name: auto
+      mountPropagation: HostToContainer
+    - mountPath: /labhome
+      name: labhome
+      mountPropagation: HostToContainer
+
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    imagePullPolicy: Always
+    resources:
+      requests:
+        memory: "8Gi"  # TODO: try to decrease
+        cpu: "4"
+      limits:
+        memory: "8Gi"
+        cpu: "4"
+    tty: true
+    command:
+    - sleep
+    args:
+    - 9999999
+    volumeMounts:
+    - mountPath: /labhome
+      name: labhome
+      mountPropagation: HostToContainer
+    - mountPath: /auto
+      name: auto
+      mountPropagation: HostToContainer
+
+  volumes:
+  - name: labhome
+    hostPath:
+      path: /labhome
+      type: Directory
+      readOnly: false
+  - name: auto
+    hostPath:
+      path: /auto
+      type: Directory
+      readOnly: false

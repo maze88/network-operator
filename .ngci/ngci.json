@@ -8,6 +8,13 @@
           "parameters": {
             "cmd" : "pwd; ls -1; env"
           }
+        },
+        {
+          "name": "build",
+          "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
+          "parameters": {
+            "DOCKERFILE_CONTEXT" : "./"
+          }
         }
       ]
     }
