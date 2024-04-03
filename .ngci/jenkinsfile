@@ -9,7 +9,7 @@ kind: Pod
 spec:
   containers:
   - name: jnlp
-    image: jenkins/jnlp-slave:4.0.1-1-alpine
+    image: jenkins/jnlp-slave:4.13.3-1-alpine
 """
     }
   }
