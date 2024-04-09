@@ -11,12 +11,17 @@ pipeline {
   }
 
   environment {
-    NGCI_VERSION = "5.0"
+    NGCI_VERSION                  = "5.0"
+    JSON_FILE                     = ".ngci/ngci.json"
+    HARBOR_REGISTRY               = credentials("harbor-rw")
+    DOCKER_PUSH_REGISTRY_USER     = "${env.HARBOR_REGISTRY_USR}"
+    DOCKER_PUSH_REGISTRY_PASSWORD = "${env.HARBOR_REGISTRY_PSW}"
+    DOCKER_BASE_IMAGE_NAME        = "mz-test-delete-me"
   }
 
-  parameters {
-    string(name: "JSON_FILE", description: "JSON file path", defaultValue: ".ngci/ngci.json")
-  }
+  // parameters {
+  //   string(name: "JSON_FILE", description: "JSON file path", defaultValue: ".ngci/ngci.json")
+  // }
 
   stages {
     stage("Init") {
