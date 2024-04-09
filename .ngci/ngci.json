@@ -1,13 +1,35 @@
 {
+  "ENABLE_CIA": "false",
   "phases": [
     {
-      "main": [
+      "Build": [
         {
-          "name": "build",
+          "name": "Build amd64",
           "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
           "container": "kaniko",
           "parameters": {
             "DOCKERFILE_CONTEXT" : "."
+          }
+        },
+        {
+          "name": "Build arm64",
+          "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
+          "container": "kaniko-arm:KANIKO_ARM64_BUILD",
+          "parameters": {
+            "PLATFORM": "arm64",
+            "DOCKERFILE_CONTEXT": "."
+          }
+        }
+      ]
+    },
+    {
+      "Package": [
+        {
+          "name": "Manifest",
+          "module": "com.nvidia.ngci.modules.docker.manifest",
+          "container": "dind",
+          "parameters": {
+            "PLATFORMS_LIST": "amd64, arm64"
           }
         }
       ]
