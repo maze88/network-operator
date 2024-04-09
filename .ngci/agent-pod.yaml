@@ -1,16 +1,27 @@
 apiVersion: v1
 kind: Pod
 spec:
+  volumes:
+  - name: labhome
+    hostPath:
+      path: /labhome
+      type: Directory
+      readOnly: false
+  - name: auto
+    hostPath:
+      path: /auto
+      type: Directory
+      readOnly: false
   containers:
   - name: jnlp
     image: harbor.mellanox.com/toolbox/c3po-jnlp:latest
     workingDir: /tmp
-    securityContext:
-      runAsUser: 7331  # TODO: recall which user this is
+    # securityContext:
+    #   runAsUser: 7331  # TODO: recall which user this is
     resources:
       requests:
-        memory: "4Gi"  # TODO: try to decrease
-        cpu: "2"
+        memory: "2Gi"
+        cpu: "1"
       limits:
         memory: "4Gi"
         cpu: "4"
@@ -21,14 +32,13 @@ spec:
     - mountPath: /labhome
       name: labhome
       mountPropagation: HostToContainer
-
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
     imagePullPolicy: Always
     resources:
       requests:
-        memory: "8Gi"  # TODO: try to decrease
-        cpu: "4"
+        memory: "2Gi"
+        cpu: "1"
       limits:
         memory: "8Gi"
         cpu: "4"
@@ -44,15 +54,3 @@ spec:
     - mountPath: /auto
       name: auto
       mountPropagation: HostToContainer
-
-  volumes:
-  - name: labhome
-    hostPath:
-      path: /labhome
-      type: Directory
-      readOnly: false
-  - name: auto
-    hostPath:
-      path: /auto
-      type: Directory
-      readOnly: false

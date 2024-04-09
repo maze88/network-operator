@@ -1,14 +1,7 @@
 {
   "phases": [
     {
-      "phase_1": [
-        {
-          "name": "sanity",
-          "module": "com.mellanox.jenkins.generic_modules.RunCmd",
-          "parameters": {
-            "cmd" : "pwd; ls"
-          }
-        },
+      "main": [
         {
           "name": "build",
           "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
