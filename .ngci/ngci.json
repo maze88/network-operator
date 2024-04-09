@@ -12,8 +12,9 @@
         {
           "name": "build",
           "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
+          "container": "kaniko",
           "parameters": {
-            "DOCKERFILE_CONTEXT" : "./"
+            "DOCKERFILE_CONTEXT" : "."
           }
         }
       ]
