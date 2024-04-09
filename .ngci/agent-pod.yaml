@@ -17,7 +17,7 @@ spec:
     image: harbor.mellanox.com/toolbox/c3po-jnlp:latest
     workingDir: /tmp
     # securityContext:
-    #   runAsUser: 7331  # TODO: recall which user this is
+    #   runAsUser: 7331
     resources:
       requests:
         memory: "2Gi"
@@ -32,6 +32,27 @@ spec:
     - mountPath: /labhome
       name: labhome
       mountPropagation: HostToContainer
+  - name: dind
+    image: harbor.mellanox.com/toolbox/devops-tools-build:0.0.7
+    imagePullPolicy: Always
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1"
+      limits:
+        memory: "4Gi"
+        cpu: "4"
+    tty: true
+    command: ['cat']
+    # securityContext:
+    #   runAsUser: 7331
+    volumeMounts:
+    - name: labhome
+      mountPath: /labhome
+      mountPropagation: HostToContainer
+    env:
+    - name: DOCKER_HOST
+      value: tcp://localhost:2375
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
     imagePullPolicy: Always

@@ -1,4 +1,12 @@
 {
+  "author": "mzeevi@nvidia.com",
+  "agentConfig": [
+    {
+      "type": "pod",
+      "libraryResource": "com/nvidia/blossom/agentTemplates/kaniko_arm64_pod.yaml",
+      "label": "arm64-agent"
+    }
+  ],
   "ENABLE_CIA": "false",
   "phases": [
     {
@@ -14,7 +22,7 @@
         {
           "name": "Build arm64",
           "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
-          "container": "kaniko-arm:KANIKO_ARM64_BUILD",
+          "container": "kaniko-arm:arm64-agent",
           "parameters": {
             "PLATFORM": "arm64",
             "DOCKERFILE_CONTEXT": "."
