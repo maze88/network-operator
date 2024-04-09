@@ -3,7 +3,7 @@ kind: Pod
 spec:
   containers:
   - name: jnlp
-    image: urm.nvidia.com/sw-switch-devops-docker/jnlp:1.0.3  # TODO: find an up to date image that doesn't "belong" to another team
+    image: harbor.mellanox.com/toolbox/c3po-jnlp:latest
     workingDir: /tmp
     securityContext:
       runAsUser: 7331  # TODO: recall which user this is
