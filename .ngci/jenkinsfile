@@ -1,27 +1,8 @@
 pipeline {
   agent {
     kubernetes {
-      yaml """
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kaniko
-spec:
-  containers:
-  - name: jnlp
-    image: jenkins/jnlp-slave:alpine
-    args:
-    - ${computer.jnlpmac} ${computer.name}
-    tty: true
-    env:
-    - name: JENKINS_URL
-      value: http://nbu-sw-co-main-svc.jenkins-master-ns.svc.cluster.local:8080/nbu-sw-co-main
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:v1.22.0
-    command:
-    - /busybox/cat
-    tty: true
-"""
+      inheritFrom      "jenkins-slave"
+      defaultContainer "kaniko"
     }
   }
 
@@ -45,7 +26,7 @@ spec:
     stage("Build") {
       steps {
         // sh("docker build -t ${env.DOCKER_IMAGE_NAME}:${env.DOCKER_IMAGE_TAG} .")
-        sh("ls -l /kaniko/executor; which executor; env")
+        sh("ls -l /kaniko/executor; which executor; which kaniko; env")
       }
     }
 
