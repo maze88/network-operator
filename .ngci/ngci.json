@@ -20,6 +20,14 @@
           }
         },
         {
+          "name": "sanity",
+          "module": "com.mellanox.jenkins.generic_modules.RunCmd",
+          "container": "kaniko-arm:arm64-agent",
+          "parameters": {
+            "cmd": "ls"
+          }
+        },
+        {
           "name": "Build arm64",
           "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
           "container": "kaniko-arm:arm64-agent",
