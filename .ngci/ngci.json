@@ -7,7 +7,6 @@
       "label": "arm64-agent"
     }
   ],
-  "ENABLE_CIA": "false",
   "phases": [
     {
       "Build": [
@@ -16,16 +15,28 @@
           "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
           "container": "kaniko",
           "parameters": {
+            "PLATFORM": "amd64",
             "DOCKERFILE_CONTEXT" : "."
           }
         },
         {
-          "name": "sanity",
+          "name": "Clone arm64",
+          "module": "com.mellanox.jenkins.generic_modules.Checkout",
+          "container": "kaniko-arm:arm64-agent",
+          "parameters": {
+            "GIT_REPOSITORY": "https://github.com/Mellanox/network-operator.git",
+            "CLONE_PATH": "network-operator",
+            "BRANCH_NAME": "master"
+          }
+        },
+        {
+          "name": "Sanity",
           "module": "com.mellanox.jenkins.generic_modules.RunCmd",
           "container": "kaniko-arm:arm64-agent",
           "parameters": {
             "cmd": "ls"
-          }
+          },
+          "wait_for": "Clone arm64"
         },
         {
           "name": "Build arm64",
@@ -34,7 +45,8 @@
           "parameters": {
             "PLATFORM": "arm64",
             "DOCKERFILE_CONTEXT": "."
-          }
+          },
+          "wait_for": "Clone arm64"
         }
       ]
     },
