@@ -30,15 +30,6 @@
           }
         },
         {
-          "name": "Sanity",
-          "module": "com.mellanox.jenkins.generic_modules.RunCmd",
-          "container": "kaniko-arm:arm64-agent",
-          "parameters": {
-            "cmd": "ls"
-          },
-          "wait_for": "Clone arm64"
-        },
-        {
           "name": "Build arm64",
           "module": "com.nvidia.ngci.modules.docker.kanikoBuild",
           "container": "kaniko-arm:arm64-agent",

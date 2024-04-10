@@ -43,7 +43,7 @@ spec:
         memory: "4Gi"
         cpu: "4"
     tty: true
-    command: ['cat']
+    command: ["cat"]
     # securityContext:
     #   runAsUser: 7331
     volumeMounts:
@@ -54,7 +54,7 @@ spec:
     - name: DOCKER_HOST
       value: tcp://localhost:2375
   - name: kaniko
-    image: gcr.io/kaniko-project/executor:debug
+    image: gcr.io/kaniko-project/executor:v1.22.0
     imagePullPolicy: Always
     resources:
       requests:
@@ -67,7 +67,7 @@ spec:
     command:
     - sleep
     args:
-    - 9999999
+    - 9000
     volumeMounts:
     - mountPath: /labhome
       name: labhome
