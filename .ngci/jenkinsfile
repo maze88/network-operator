@@ -1,7 +1,7 @@
 pipeline {
   agent {
     kubernetes {
-      yamlFile ".ngci/agent-amd64.yaml"
+      yamlFile(".ngci/agent-amd64.yaml")
     }
   }
 
@@ -25,6 +25,11 @@ pipeline {
 
   stages {
     stage("Build") {
+      agent {
+        kubernetes {
+          nodeSelector(["kubernetes.io/arch": "arm64"])
+        }
+      }
       steps {
         container("kaniko") {
           withCredentials([file(credentialsId: "$DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
@@ -34,21 +39,6 @@ pipeline {
         }
       }
     }
-
-    // stage("Publish") {
-    //   when {
-    //     anyOf {
-    //       branch "main"
-    //       expression { params.PUSH_DOCKER_IMAGE }
-    //     }
-    //   }
-    //   steps {
-    //     withCredentials([usernamePassword(credentialsId: "${env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID}", usernameVariable: "USERNAME", passwordVariable: "PASSWORD")]) {
-    //       sh("echo '${PASSWORD}' | docker login -u ${USERNAME} --password-stdin ${DOCKER_IMAGE_REGISTRY}")
-    //     }
-    //     sh("docker push ${env.DOCKER_IMAGE_NAME}:${env.DOCKER_IMAGE_TAG}")
-    //   }
-    // }
   }
 }
 
