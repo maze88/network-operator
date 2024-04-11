@@ -27,7 +27,12 @@ pipeline {
     stage("Build") {
       steps {
         container("kaniko") {
-          sh("/kaniko/executor --context . $KANIKO_ARGS --destination $DOCKER_IMAGE_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG")
+          withCredentials([file(credentialsId: "kaniko-config", variable: "KANIKO_CONFIG")]) {
+            sh("ln -s $KANIKO_CONFIG /kaniko/.docker/config.json")
+            sh("cat $KANIKO_CONFIG")
+            sh("cat /kaniko/.docker/config.json")
+            sh("/kaniko/executor --context . $KANIKO_ARGS --destination $DOCKER_IMAGE_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG")
+          }
         }
       }
     }
