@@ -22,7 +22,7 @@ pipeline {
   stages {
     stage("Build and push image") {
       matrix {
-        axis {
+        axes {
           name "ARCH"
           values "amd64", "arm64"
         }
