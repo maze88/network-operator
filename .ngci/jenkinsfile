@@ -1,8 +1,8 @@
 pipeline {
   agent {
     kubernetes {
-      yamlFile ".ngci/builder-amd64.yaml"
-      // defaultContainer "kaniko"
+      yamlFile ".ngci/agent-amd64.yaml"
+      defaultContainer "kaniko"
     }
   }
 

@@ -6,6 +6,13 @@ spec:
   containers:
   - name: jnlp
     image: jenkins/inbound-agent:latest
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:v1.22.0
+    tty: true
+    command:
+    - cat
+
+
 
 #    volumeMounts:
 #    - mountPath: "/auto"
