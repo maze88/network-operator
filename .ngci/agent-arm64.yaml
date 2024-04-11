@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: builder
+spec:
+  nodeSelector:
+    kubernetes.io/arch: arm64
+  containers:
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:v1.22.0-debug
+    command:
+    - cat
+    tty: true
