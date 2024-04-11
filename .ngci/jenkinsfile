@@ -25,7 +25,7 @@ pipeline {
     stage("Build") {
       steps {
         container("kaniko") {
-          sh("pwd; ls -l; /kaniko/executor; which executor; which kaniko; env")
+          sh("pwd; ls -l; env; which executor; which kaniko; /kaniko/executor")
         }
       }
     }

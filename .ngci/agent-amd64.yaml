@@ -8,11 +8,11 @@ spec:
     image: jenkins/inbound-agent:latest
   - name: kaniko
     image: gcr.io/kaniko-project/executor:v1.22.0
-    # tty: true
+    tty: true
     command:
     - sleep
     args:
-    - "9000"
+    - "3600"
 
 
 
