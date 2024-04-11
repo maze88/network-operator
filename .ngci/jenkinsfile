@@ -32,7 +32,7 @@ pipeline {
           stage("Build and push image") {
             agent {
               kubernetes {
-                yamlFile ".ngci/agent-pod-$ARCH.yaml"
+                yamlFile ".ngci/agent-pod-${ARCH}.yaml"
               }
             }
             steps {
