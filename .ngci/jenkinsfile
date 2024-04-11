@@ -34,14 +34,23 @@ pipeline {
             nodeSelector ["kubernetes.io/arch": "$ARCH"]
           }
         }
-        steps {
-          container("kaniko") {
-            withCredentials([file(credentialsId: "$DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
-              sh("ln -s $DOCKER_CONFIG /kaniko/.docker/config.json")
-              sh("/kaniko/executor --context . $KANIKO_ARGS --destination $DOCKER_IMAGE_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG")
+        stages {
+          stage("Build and push image") {
+            steps {
+              container("kaniko") {
+                withCredentials([file(credentialsId: "$DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
+                  sh("ln -s $DOCKER_CONFIG /kaniko/.docker/config.json")
+                  sh("/kaniko/executor --context . $KANIKO_ARGS --destination $DOCKER_IMAGE_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG")
+                }
+              }
             }
           }
         }
+      }
+    }
+    stage("Manifest") {
+      steps {
+        echo "TODO"
       }
     }
   }
