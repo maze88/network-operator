@@ -12,7 +12,7 @@ pipeline {
 
   environment {
     DOCKER_IMAGE_REGISTRY                = "harbor.mellanox.com"
-    // DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "dockerhub-maze88"
+    DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "docker-registry-config"
     DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"
     DOCKER_IMAGE_TAG                     = "dev"
     // DOCKER_IMAGE_TAG                     = "${params.TAG_VERSION_AS_LATEST ? "latest" : env.BUILD_NUMBER}"
@@ -27,10 +27,8 @@ pipeline {
     stage("Build") {
       steps {
         container("kaniko") {
-          withCredentials([file(credentialsId: "kaniko-config", variable: "KANIKO_CONFIG")]) {
-            sh("ln -s $KANIKO_CONFIG /kaniko/.docker/config.json")
-            sh("cat $KANIKO_CONFIG")
-            sh("cat /kaniko/.docker/config.json")
+          withCredentials([file(credentialsId: "$DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
+            sh("ln -s $DOCKER_CONFIG /kaniko/.docker/config.json")
             sh("/kaniko/executor --context . $KANIKO_ARGS --destination $DOCKER_IMAGE_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG")
           }
         }
