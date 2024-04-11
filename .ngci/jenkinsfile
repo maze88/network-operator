@@ -2,7 +2,6 @@ pipeline {
   agent {
     kubernetes {
       yamlFile ".ngci/agent-amd64.yaml"
-      defaultContainer "kaniko"
     }
   }
 
@@ -25,8 +24,9 @@ pipeline {
   stages {
     stage("Build") {
       steps {
-        // sh("docker build -t ${env.DOCKER_IMAGE_NAME}:${env.DOCKER_IMAGE_TAG} .")
-        sh("pwd; ls -l; /kaniko/executor; which executor; which kaniko; env")
+        container("kaniko") {
+          sh("pwd; ls -l; /kaniko/executor; which executor; which kaniko; env")
+        }
       }
     }
 
