@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: builder-amd64
+spec:
+  containers:
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+
+#    volumeMounts:
+#    - mountPath: "/auto"
+#      mountPropagation: "HostToContainer"
+#      name: "auto"
+#    - mountPath: "/labhome"
+#      mountPropagation: "HostToContainer"
+#      name: "labhome"
+#    - mountPath: "/tmp"
+#      name: "workspace-volume"
+#      readOnly: false
+#    workingDir: "/tmp"
+#  - command:
+#    - "cat"
+#    env:
+#    - name: "DOCKER_HOST"
+#      value: "tcp://localhost:2375"
+#    image: "harbor.mellanox.com/toolbox/devops-tools-build:0.0.7"
+#    imagePullPolicy: "Always"
+#    name: "dind"
+#    resources:
+#      limits:
+#        memory: "4Gi"
+#        cpu: "4"
+#      requests:
+#        memory: "2Gi"
+#        cpu: "1"
+#    tty: true
+#    volumeMounts:
+#    - mountPath: "/labhome"
+#      mountPropagation: "HostToContainer"
+#      name: "labhome"
+#    - mountPath: "/tmp"
+#      name: "workspace-volume"
+#      readOnly: false
+#    workingDir: "/tmp"
+#  - args:
+#    - "9000"
+#    command:
+#    - "sleep"
+#    image: "gcr.io/kaniko-project/executor:debug"
+#    imagePullPolicy: "Always"
+#    name: "kaniko"
+#    resources:
+#      limits:
+#        memory: "8Gi"
+#        cpu: "4"
+#      requests:
+#        memory: "2Gi"
+#        cpu: "1"
+#    tty: true
+#    volumeMounts:
+#    - mountPath: "/labhome"
+#      mountPropagation: "HostToContainer"
+#      name: "labhome"
+#    - mountPath: "/auto"
+#      mountPropagation: "HostToContainer"
+#      name: "auto"
+#    - mountPath: "/tmp"
+#      name: "workspace-volume"
+#      readOnly: false
+#    workingDir: "/tmp"
+#  nodeSelector:
+#    kubernetes.io/os: "linux"
+#  restartPolicy: "Never"
+#  volumes:
+#  - hostPath:
+#      path: "/labhome"
+#      type: "Directory"
+#      readOnly: false
+#    name: "labhome"
+#  - hostPath:
+#      path: "/auto"
+#      type: "Directory"
+#      readOnly: false
+#    name: "auto"
+#  - emptyDir:
+#      medium: ""
+#    name: "workspace-volume"

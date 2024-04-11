@@ -1,8 +1,8 @@
 pipeline {
   agent {
     kubernetes {
-      inheritFrom      "jenkins-slave"
-      defaultContainer "kaniko"
+      yamlFile ".ngci/builder-amd64.yaml"
+      // defaultContainer "kaniko"
     }
   }
 
@@ -26,7 +26,7 @@ pipeline {
     stage("Build") {
       steps {
         // sh("docker build -t ${env.DOCKER_IMAGE_NAME}:${env.DOCKER_IMAGE_TAG} .")
-        sh("ls -l /kaniko/executor; which executor; which kaniko; env")
+        sh("pwd; ls -l; /kaniko/executor; which executor; which kaniko; env")
       }
     }
 
