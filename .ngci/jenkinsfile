@@ -33,7 +33,12 @@ pipeline {
             agent {
               kubernetes {
                 yamlFile ".ngci/agent-pod.yaml"
-                nodeSelector(["kubernetes.io/arch": "$ARCH"])
+                // nodeSelector(["kubernetes.io/arch": "$ARCH"])
+                yaml """
+spec:
+  nodeSelector:
+    kubernetes.io/arch: "$ARCH"
+                """
               }
             }
             steps {
