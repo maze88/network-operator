@@ -1,17 +1,11 @@
 pipeline {
   agent any
 
-  // parameters {
-  //   booleanParam(name: "TAG_VERSION_AS_LATEST", defaultValue: true,  description: "Sets the version tag to 'latest' (disable to use the Jenkins `BUILD_NUMBER` as version)")
-  //   booleanParam(name: "PUSH_DOCKER_IMAGE",     defaultValue: false, description: "If to push (publish) the built Docker image")
-  // }
-
   environment {
     DOCKER_IMAGE_REGISTRY                = "harbor.mellanox.com"
     DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "docker-registry-config"
     DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"
     DOCKER_DEFAULT_IMAGE_TAG             = "latest"
-    // DOCKER_IMAGE_TAG                     = "${params.TAG_VERSION_AS_LATEST ? "latest" : env.BUILD_NUMBER}"
     KANIKO_ARGS                          = "--registry-mirror dockerhub.nvidia.com --registry-mirror dockerhub-backup.nvidia.com"
   }
 
