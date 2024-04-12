@@ -10,7 +10,7 @@ pipeline {
     DOCKER_IMAGE_REGISTRY                = "harbor.mellanox.com"
     DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "docker-registry-config"
     DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"
-    DOCKER_IMAGE_TAG                     = "latest"
+    DOCKER_DEFAULT_IMAGE_TAG             = "latest"
     // DOCKER_IMAGE_TAG                     = "${params.TAG_VERSION_AS_LATEST ? "latest" : env.BUILD_NUMBER}"
     KANIKO_ARGS                          = "--registry-mirror dockerhub.nvidia.com --registry-mirror dockerhub-backup.nvidia.com"
   }
@@ -23,10 +23,9 @@ pipeline {
     stage("Determine tag") {
       steps {
         script {
-          DOCKER_IMAGE_TAG = sh(script: "git describe --tags --exact-match || echo 'latest'", returnStdout: true).trim()
+          DOCKER_IMAGE_TAG = sh(script: "git describe --tags --exact-match || echo '${env.DOCKER_DEFAULT_IMAGE_TAG}'", returnStdout: true).trim()
         }
-        sh("echo $env.DOCKER_IMAGE_TAG")  // debug
-        sh("echo $DOCKER_IMAGE_TAG")      // debug
+        sh("echo Will use tag: '$DOCKER_IMAGE_TAG'")
       }
     }
     stage("Build and push image") {
@@ -46,10 +45,10 @@ pipeline {
             }
             steps {
               container("kaniko") {
-                withCredentials([file(credentialsId: "$DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
+                withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
                   sh("ln -s $DOCKER_CONFIG /kaniko/.docker/config.json")
                   sh("cat /kaniko/.docker/config.json")  // debug
-                  sh("/kaniko/executor --context . $KANIKO_ARGS --destination $DOCKER_IMAGE_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
+                  sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
                 }
               }
             }
