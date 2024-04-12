@@ -10,8 +10,7 @@ pipeline {
     DOCKER_IMAGE_REGISTRY                = "harbor.mellanox.com"
     DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "docker-registry-config"
     DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"
-    // DOCKER_IMAGE_TAG                     = "latest"
-    DOCKER_IMAGE_TAG                     = "${sh(script: 'git describe --tags --exact-match', returnStdout: true).trim() ?: 'latest'}"
+    DOCKER_IMAGE_TAG                     = "latest"
     // DOCKER_IMAGE_TAG                     = "${params.TAG_VERSION_AS_LATEST ? "latest" : env.BUILD_NUMBER}"
     KANIKO_ARGS                          = "--registry-mirror dockerhub.nvidia.com --registry-mirror dockerhub-backup.nvidia.com"
   }
@@ -23,8 +22,11 @@ pipeline {
   stages {
     stage("Determine tag") {
       steps {
-        sh('echo $(git describe --tags --exact-match)')  // debug
-        sh("echo $DOCKER_IMAGE_TAG")  // debug
+        script {
+          DOCKER_IMAGE_TAG = sh(script: "git describe --tags --exact-match || echo 'latest'", returnStdout: true).trim()
+        }
+        sh("echo $env.DOCKER_IMAGE_TAG")  // debug
+        sh("echo $DOCKER_IMAGE_TAG")      // debug
       }
     }
     stage("Build and push image") {
