@@ -14,10 +14,12 @@ pipeline {
   }
 
   stages {
+    // if ref is tagged, the image will be tagged with `<git tag>-<arch>` otherwise `latest-<arch>`.
     stage("Determine tag") {
       steps {
+        sh("git fetch --tags $env.GIT_URL HEAD")
         script {
-          DOCKER_IMAGE_TAG = sh(script: "git describe --tags --exact-match || echo '${env.DOCKER_DEFAULT_IMAGE_TAG}'", returnStdout: true).trim()
+          DOCKER_IMAGE_TAG = sh(script: "git describe --tags --exact-match || echo '$env.DOCKER_DEFAULT_IMAGE_TAG'", returnStdout: true).trim()
         }
         sh("echo Will use tag: '$DOCKER_IMAGE_TAG'")
       }
