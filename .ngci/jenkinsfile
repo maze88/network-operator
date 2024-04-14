@@ -24,7 +24,7 @@ pipeline {
         sh("echo Will use tag: '$DOCKER_IMAGE_TAG'")
       }
     }
-    stage("Build and push images") {
+    stage("Build and push image") {
       matrix {
         axes {
           axis {
@@ -33,7 +33,7 @@ pipeline {
           }
         }
         stages {
-          stage("Build and push $ARCH image") {
+          stage("Build and push image") {
             agent {
               kubernetes {
                 yamlFile ".ngci/agent-pod-${ARCH}.yaml"
