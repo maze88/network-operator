@@ -43,8 +43,10 @@ pipeline {
               container("kaniko") {
                 withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
                   sh("ln -s $DOCKER_CONFIG /kaniko/.docker/config.json")
-                  sh("cat /kaniko/.docker/config.json")  // debug
-                  sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
+                  sh("whoami || id -u") // debug
+                  sh("cp $DOCKER_CONFIG /kaniko/.docker/config.json.cp") // debug
+                  sh("ls -l /kaniko/.docker/config.json* $DOCKER_CONFIG") // debug
+                  sh("/kaniko/executor --verbosity panic --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
                 }
               }
             }
