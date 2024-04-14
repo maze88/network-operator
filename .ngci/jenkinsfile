@@ -42,11 +42,11 @@ pipeline {
             steps {
               container("kaniko") {
                 withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
-                  sh("ln -s $DOCKER_CONFIG /kaniko/.docker/config.json")
-                  sh("whoami || id -u") // debug
-                  sh("cp $DOCKER_CONFIG /kaniko/.docker/config.json.cp") // debug
+                  sh("ln -s $DOCKER_CONFIG /kaniko/.docker/config.json")  // credential file owned by user 1000, while symbolic link created by user 0
+                  sh("whoami || id -u") // debug returns `whoami: unknown uid 0`
+                  sh("cp $DOCKER_CONFIG /kaniko/.docker/config.json.cp") // debug credential file owned by user 1000, while copy owned by user 0
                   sh("ls -l /kaniko/.docker/config.json* $DOCKER_CONFIG") // debug
-                  sh("/kaniko/executor --verbosity panic --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
+                  sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
                 }
               }
             }
