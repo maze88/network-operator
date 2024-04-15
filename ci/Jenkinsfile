@@ -14,7 +14,7 @@ pipeline {
   }
 
   stages {
-    // if ref is tagged, the image will be tagged with `<git tag>-<arch>` otherwise `latest-<arch>`.
+    // if the git ref has a git tag, the image will be tagged with '$GIT_TAG' otherwise 'latest'.
     stage("Determine tag") {
       steps {
         sh("git fetch --tags $env.GIT_URL HEAD")
@@ -45,7 +45,12 @@ pipeline {
                   sh("cp $DOCKER_CONFIG_FILE /kaniko/.docker/config.json")  // config file must be in this specific path for kaniko
                 }
                 sh("echo skipped while developing")
-                // sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
+                // sh("""
+                //   /kaniko/executor \
+                //     $env.KANIKO_ARGS \
+                //     --context . \
+                //     --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH
+                // """)
               }
             }
             post {
@@ -65,11 +70,18 @@ pipeline {
       }
       steps {
         container("manifest-tool") {
-          sh("/manifest-tool --version")
-          sh("manifest-tool --version")
+          withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
+            sh("""
+              manifest-tool \
+                --docker-cfg $DOCKER_CONFIG_FILE \
+                push \
+                --platforms linux/amd64,linux/arm64 \
+                --template $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-ARCH \
+                --target   $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+            """)
+          }
         }
       }
     }
   }
 }
-
