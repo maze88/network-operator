@@ -46,6 +46,7 @@ pipeline {
                   sh("cp $DOCKER_CONFIG /kaniko/.docker/config.json.cp")                   // DEBUG credential file owned by user 1000, while copy owned by user 0
                   sh("ls -l /kaniko/.docker/config.json* $DOCKER_CONFIG /kaniko/executor") // DEBUG all files owned by uid 0, except credential that is owned by 1000
                   sh("whoami || id -u")                                                    // DEBUG returns `whoami: unknown uid 0`
+                  sh("cat /kaniko/.docker/config.json")                                    // DEBUG verify access and content
                   sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
                 }
               }

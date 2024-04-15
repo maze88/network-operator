@@ -11,5 +11,7 @@ spec:
     # securityContext:
     #   runAsUser: 0
     command:
-    - cat
+    - sleep
+    args:
+    - "9000"
     tty: true
