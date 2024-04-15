@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   environment {
-    DOCKER_IMAGE_REGISTRY                = "harbor.mellanox.com"
-    DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "docker-registry-config"
+    DOCKER_IMAGE_REGISTRY                = "${env.JENKINS_URL.split('/')[2].startsWith('nbuprod') ? 'harbor.mellanox.com'    : 'harbor-pdc.nvidia.com'}"
+    DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "${env.JENKINS_URL.split('/')[2].startsWith('nbuprod') ? 'docker-registry-config' : 'docker-registry-config-pdc'}"  // TODO: create credential in jenkins
     DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"  // TODO: change before merging to master
     DOCKER_DEFAULT_IMAGE_TAG             = "latest"
     KANIKO_ARGS                          = "--registry-mirror dockerhub.nvidia.com --registry-mirror dockerhub-backup.nvidia.com"
@@ -41,10 +41,11 @@ pipeline {
             }
             steps {
               container("kaniko") {
-                withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG")]) {
-                  sh("cp $DOCKER_CONFIG /kaniko/.docker/config.json")  // config file must be in this specific path for kaniko
+                withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
+                  sh("cp $DOCKER_CONFIG_FILE /kaniko/.docker/config.json")  // config file must be in this specific path for kaniko
                 }
-                sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
+                sh("echo skipped for dev")
+                // sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
               }
             }
             post {
@@ -57,8 +58,13 @@ pipeline {
       }
     }
     stage("Manifest") {
+      agent {
+        kubernetes {
+          yamlFile "ci/agent-pod-manifest.yaml"
+        }
+      }
       steps {
-        echo "TODO"
+        sh("manifest-tool version")
       }
     }
   }
