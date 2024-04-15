@@ -36,7 +36,7 @@ pipeline {
           stage("Build and push image") {
             agent {
               kubernetes {
-                yamlFile "ci/agent-pod-${ARCH}.yaml"
+                yamlFile "ci/agent-kaniko-${ARCH}.yaml"
               }
             }
             steps {
@@ -44,7 +44,7 @@ pipeline {
                 withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
                   sh("cp $DOCKER_CONFIG_FILE /kaniko/.docker/config.json")  // config file must be in this specific path for kaniko
                 }
-                sh("echo skipped for dev")
+                sh("echo skipped while developing")
                 // sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
               }
             }
@@ -57,14 +57,17 @@ pipeline {
         }
       }
     }
-    stage("Manifest") {
+    stage("Package") {
       agent {
         kubernetes {
-          yamlFile "ci/agent-pod-manifest.yaml"
+          yamlFile "ci/agent-manifest-tool.yaml"
         }
       }
       steps {
-        sh("manifest-tool version")
+        container("manifest-tool") {
+          sh("/manifest-tool --version")
+          sh("manifest-tool --version")
+        }
       }
     }
   }
