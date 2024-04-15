@@ -74,7 +74,7 @@ pipeline {
             sh("""
               manifest-tool \
                 --docker-cfg $DOCKER_CONFIG_FILE \
-                push \
+                push from-args \
                 --platforms linux/amd64,linux/arm64 \
                 --template $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-ARCH \
                 --target   $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
