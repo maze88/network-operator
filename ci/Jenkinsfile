@@ -47,6 +47,11 @@ pipeline {
                 sh("/kaniko/executor --context . $env.KANIKO_ARGS --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH")
               }
             }
+            post {
+              always {
+                sh("rm -f /kaniko/.docker/config.json")
+              }
+            }
           }
         }
       }
