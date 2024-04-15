@@ -4,7 +4,7 @@ pipeline {
   environment {
     DOCKER_IMAGE_REGISTRY                = "harbor.mellanox.com"
     DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "docker-registry-config"
-    DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"
+    DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"  // TODO: change before merging to master
     DOCKER_DEFAULT_IMAGE_TAG             = "latest"
     KANIKO_ARGS                          = "--registry-mirror dockerhub.nvidia.com --registry-mirror dockerhub-backup.nvidia.com"
   }
@@ -36,7 +36,7 @@ pipeline {
           stage("Build and push image") {
             agent {
               kubernetes {
-                yamlFile ".ngci/agent-pod-${ARCH}.yaml"
+                yamlFile "ci/agent-pod-${ARCH}.yaml"
               }
             }
             steps {
