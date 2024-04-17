@@ -2,11 +2,12 @@ pipeline {
   agent any
 
   environment {
-    DOCKER_IMAGE_REGISTRY                = "${env.JENKINS_URL.split('/')[2].startsWith('nbuprod') ? 'harbor.mellanox.com'    : 'harbor-pdc.nvidia.com'}"
-    DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID = "${env.JENKINS_URL.split('/')[2].startsWith('nbuprod') ? 'docker-registry-config' : 'docker-registry-config-pdc'}"  // TODO: create credential in jenkins
-    DOCKER_IMAGE_NAME                    = "cloud-orchestration-dev/network-operator-mzeevi-test"  // TODO: change before merging to master
-    DOCKER_DEFAULT_IMAGE_TAG             = "latest"
-    KANIKO_ARGS                          = "--registry-mirror dockerhub.nvidia.com --registry-mirror dockerhub-backup.nvidia.com"
+    DOCKER_DEFAULT_TAG                     = "latest"
+    VALID_GIT_TAG_REGEX                    = "v[0-9]+\\.[0-9]+\\.[0-9]+(-(beta|rc)\\.[0-9]+)?"  // patern matches 'v<semver>' with optional suffix of '-beta.<number>' or '-rc.<number>'
+    DOCKER_IMAGE_REGISTRIES_CREDENTIALS_ID = "docker-registry-config"  // TODO: once two-way replication is setup, add harbor-pdc credentials in jenkins // TODO: add credentials for nvstaging
+    DOCKER_IMAGE_NAME_WITH_REGISTRY_A      = "${env.JENKINS_URL.split('/')[2].startsWith('nbuprod') ? 'harbor.mellanox.com' : 'harbor.nvidia.com'}/cloud-orchestration-dev/network-operator-mzeevi-test"  // TODO: remove '-mzeevi-test' before merging to master  // TODO: once two-way replication is setup, set second ternary option to 'harbor-pdc.nvidia.com'
+    DOCKER_IMAGE_NAME_WITH_REGISTRY_B      = "nvcr.io/nvstaging/mellanox/network-operator-mzeevi-test"  // TODO: remove '-mzeevi-test' before merging to master
+    KANIKO_ARGS                            = "--registry-mirror dockerhub.nvidia.com --registry-mirror dockerhub-backup.nvidia.com"
   }
 
   options {
@@ -14,16 +15,17 @@ pipeline {
   }
 
   stages {
-    // if the git ref has a git tag, the image will be tagged with '$GIT_TAG' otherwise 'latest'.
     stage("Determine tag") {
       steps {
         sh("git fetch --tags $env.GIT_URL HEAD")
         script {
-          DOCKER_IMAGE_TAG = sh(script: "git describe --tags --exact-match || echo '$env.DOCKER_DEFAULT_IMAGE_TAG'", returnStdout: true).trim()
+          DOCKER_TAG = sh(script: "git describe --tags --exact-match | grep -E '$env.VALID_GIT_TAG_REGEX' || echo '$env.DOCKER_DEFAULT_TAG'", returnStdout: true).trim()  // if the git ref has a vlaid git tag, the image will be tagged with '$GIT_TAG' otherwise 'latest'.
+          GIT_COMMIT_SHORT = sh(script: "git log -n 1 --format=%h", returnStdout: true).trim()
         }
-        sh("echo Will use tag: '$DOCKER_IMAGE_TAG'")
+        sh("echo Will use tags: '$DOCKER_TAG' and '$GIT_COMMIT_SHORT'")
       }
     }
+
     stage("Build and push image") {
       matrix {
         axes {
@@ -37,21 +39,23 @@ pipeline {
             agent {
               kubernetes {
                 yamlFile "ci/agent-kaniko-${ARCH}.yaml"
+                defaultContainer "kaniko"
               }
             }
             steps {
-              container("kaniko") {
-                withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
-                  sh("cp $DOCKER_CONFIG_FILE /kaniko/.docker/config.json")  // config file must be in this specific path for kaniko
-                }
-                sh("echo skipped while developing")
-                // sh("""
-                //   /kaniko/executor \
-                //     $env.KANIKO_ARGS \
-                //     --context . \
-                //     --destination $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-$ARCH
-                // """)
+              withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRIES_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
+                sh("cp $DOCKER_CONFIG_FILE /kaniko/.docker/config.json")
               }
+              sh("echo skipped while developing")
+              sh("""
+                /kaniko/executor \
+                  $env.KANIKO_ARGS \
+                  --context . \
+                  --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A:$DOCKER_TAG-$ARCH \
+                  --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B:$DOCKER_TAG-$ARCH \
+                  --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A:$GIT_COMMIT_SHORT-$ARCH \
+                  --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B:$GIT_COMMIT_SHORT-$ARCH \
+              """)
             }
             post {
               always {
@@ -62,23 +66,36 @@ pipeline {
         }
       }
     }
+
     stage("Package") {
       agent {
         kubernetes {
           yamlFile "ci/agent-manifest-tool.yaml"
+          defaultContainer "manifest-tool"
         }
       }
-      steps {
-        container("manifest-tool") {
-          withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRY_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
-            sh("""
-              manifest-tool \
-                --docker-cfg $DOCKER_CONFIG_FILE \
-                push from-args \
-                --platforms linux/amd64,linux/arm64 \
-                --template $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG-ARCH \
-                --target   $env.DOCKER_IMAGE_REGISTRY/$env.DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
-            """)
+      matrix {
+        axes {
+          axis {
+            name "DOCKER_IMAGE_NAME_WITH_REGISTRY"
+            values "$env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A", "$env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B"
+          }
+        }
+        stages {
+          stage("Package") {
+            steps {
+              withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRIES_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
+                sh("""
+                  manifest-tool \
+                    --docker-cfg $DOCKER_CONFIG_FILE \
+                    push from-args \
+                    --platforms  linux/amd64,linux/arm64 \
+                    --template   $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG-ARCH \
+                    --target     $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG \
+                    --tags       $GIT_COMMIT_SHORT \
+                """)
+              }
+            }
           }
         }
       }

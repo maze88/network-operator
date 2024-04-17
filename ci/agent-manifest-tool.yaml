@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: jnlp
-    image: jenkins/inbound-agent:latest
+    image: jenkins/inbound-agent:alpine3.19
   - name: manifest-tool
     image: mplatform/manifest-tool:alpine-v2.1.6
     command:
