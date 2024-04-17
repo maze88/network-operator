@@ -54,7 +54,6 @@ pipeline {
                   --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A:$GIT_COMMIT_SHORT-$ARCH \
                   --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B:$GIT_COMMIT_SHORT-$ARCH \
               """)
-              sh("rm -f /kaniko/.docker/config.json")
             }
           }
         }
