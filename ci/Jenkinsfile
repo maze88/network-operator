@@ -55,7 +55,7 @@ pipeline {
                   --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A:$DOCKER_TAG-$ARCH \
                   --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B:$DOCKER_TAG-$ARCH \
                   --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A:$GIT_COMMIT_SHORT-$ARCH \
-                  --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B:$GIT_COMMIT_SHORT-$ARCH
+                  --destination $env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B:$GIT_COMMIT_SHORT-$ARCH \
               """)  // TODO: ask testers if we need all arch-specific tags/formats available (for testing etc.?) or can we just make one and then manifest/package with the three tags?
             }
             post {
@@ -87,7 +87,7 @@ pipeline {
                   --platforms  linux/amd64,linux/arm64 \
                   --template   $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG-ARCH \
                   --target     $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG \
-                  --tags       $DOCKER_DEFAULT_TAG,$GIT_COMMIT_SHORT
+                  --tags       $DOCKER_DEFAULT_TAG,$GIT_COMMIT_SHORT \
               """)
             }
           }
