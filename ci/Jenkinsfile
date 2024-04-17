@@ -68,21 +68,21 @@ pipeline {
     }
 
     stage("Package") {
-      agent {
-        kubernetes {
-          yamlFile "ci/agent-manifest-tool.yaml"
-          defaultContainer "manifest-tool"
-        }
-      }
       matrix {
         axes {
           axis {
             name "DOCKER_IMAGE_NAME_WITH_REGISTRY"
-            values "$env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A", "$env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B"
+            values "$DOCKER_IMAGE_NAME_WITH_REGISTRY_A", "$DOCKER_IMAGE_NAME_WITH_REGISTRY_B"
           }
         }
         stages {
           stage("Package") {
+            agent {
+              kubernetes {
+                yamlFile "ci/agent-manifest-tool.yaml"
+                defaultContainer "manifest-tool"
+              }
+            }
             steps {
               withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRIES_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
                 sh("""
