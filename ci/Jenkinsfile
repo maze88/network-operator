@@ -68,33 +68,26 @@ pipeline {
     }
 
     stage("Package") {
-      matrix {
-        axes {
-          axis {
-            name "DOCKER_IMAGE_NAME_WITH_REGISTRY"
-            values "$DOCKER_IMAGE_NAME_WITH_REGISTRY_A", "$DOCKER_IMAGE_NAME_WITH_REGISTRY_B"
-          }
+      agent {
+        kubernetes {
+          yamlFile "ci/agent-manifest-tool.yaml"
+          defaultContainer "manifest-tool"
         }
-        stages {
-          stage("Package") {
-            agent {
-              kubernetes {
-                yamlFile "ci/agent-manifest-tool.yaml"
-                defaultContainer "manifest-tool"
-              }
-            }
-            steps {
-              withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRIES_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
-                sh("""
-                  manifest-tool \
-                    --docker-cfg $DOCKER_CONFIG_FILE \
-                    push from-args \
-                    --platforms  linux/amd64,linux/arm64 \
-                    --template   $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG-ARCH \
-                    --target     $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG \
-                    --tags       $GIT_COMMIT_SHORT \
-                """)
-              }
+      }
+      // values "$DOCKER_IMAGE_NAME_WITH_REGISTRY_A", "$DOCKER_IMAGE_NAME_WITH_REGISTRY_B"
+      steps {
+        script {
+          withCredentials([file(credentialsId: "$env.DOCKER_IMAGE_REGISTRIES_CREDENTIALS_ID", variable: "DOCKER_CONFIG_FILE")]) {
+            for (DOCKER_IMAGE_NAME_WITH_REGISTRY in [env.DOCKER_IMAGE_NAME_WITH_REGISTRY_A, env.DOCKER_IMAGE_NAME_WITH_REGISTRY_B]) {
+              sh("""
+                manifest-tool \
+                  --docker-cfg $DOCKER_CONFIG_FILE \
+                  push from-args \
+                  --platforms  linux/amd64,linux/arm64 \
+                  --template   $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG-ARCH \
+                  --target     $DOCKER_IMAGE_NAME_WITH_REGISTRY:$DOCKER_TAG \
+                  --tags       $GIT_COMMIT_SHORT \
+              """)
             }
           }
         }
