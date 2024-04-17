@@ -78,8 +78,9 @@ pipeline {
                   --platforms  linux/amd64,linux/arm64 \
                   --template   $DOCKER_IMAGE_NAME_WITH_REGISTRY:$GIT_COMMIT_SHORT-ARCH \
                   --target     $DOCKER_IMAGE_NAME_WITH_REGISTRY:$GIT_COMMIT_SHORT \
-                  --tags       $DOCKER_DEFAULT_TAG,$GIT_TAG \
-              """)  // TODO: verify if trailing comma breaks `--tags` option
+                  --tags       $DOCKER_DEFAULT_TAG \
+                  ${GIT_TAG ? "--tags $GIT_TAG" : ""} \
+              """)
             }
           }
         }
