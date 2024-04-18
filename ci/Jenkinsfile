@@ -18,7 +18,7 @@ pipeline {
   stages {
     stage("Determine Docker tags") {
       steps {
-        sh("git fetch --tags $env.GIT_URL HEAD")
+        sh("git fetch --force --tags $env.GIT_URL HEAD")
         script {
           GIT_COMMIT_SHORT = sh(script: "git log -n 1 --format=%h", returnStdout: true).trim()
           GIT_TAG          = sh(script: "git describe --tags --exact-match | grep -E '$env.VALID_TAG_REGEX' || true", returnStdout: true).trim()
