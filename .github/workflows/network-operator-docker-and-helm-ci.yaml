@@ -20,13 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Determine docker tags (from git branch)
+    - name: Determine docker tags (when git branch)
       if: github.ref_type == 'branch'
       run: |
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
         latest=${{ github.ref_name == 'master' && 'latest' || '' }}  # 'latest', if branch is master
         echo DOCKER_TAGS=""$git_sha $latest"" >> $GITHUB_ENV
-    - name: Determine docker tags (from git tag)
+    - name: Determine docker tags (when git tag)
       if: github.ref_type == 'tag'
       run: |
         git_tag=${{ github.ref_name }}
@@ -48,16 +48,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Determine versions (from git branch)
+    - name: Determine versions (when git branch)
       if: github.ref_type == 'branch'
       run: |
-        git_sha=$(git rev-parse --short HEAD)  # short git commit hash
-        chart_current_version=$(yq '.version' deployment/network-operator/Chart.yaml)
-        app_version=$git_sha
-        chart_version=$chart_current_version-$git_sha
-        echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
-        echo VERSION=""$chart_version""   >> $GITHUB_ENV
-    - name: Determine versions (from git tag)
+        if [ ${{ github.ref_name }} == 'master' ]; then
+          git_sha=$(git rev-parse --short HEAD)  # short git commit hash
+          chart_current_version=$(yq '.version' deployment/network-operator/Chart.yaml)
+          app_version=$git_sha
+          chart_version=$chart_current_version-$git_sha
+          echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
+          echo VERSION=""$chart_version""   >> $GITHUB_ENV
+        else
+          echo "Aborting build since triggered from non-master branch"
+          exit 0
+        fi
+    - name: Determine versions (when git tag)
       if: github.ref_type == 'tag'
       run: |
         git_tag=${{ github.ref_name }}
