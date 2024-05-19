@@ -60,7 +60,7 @@ jobs:
           echo VERSION=""$chart_version""   >> $GITHUB_ENV
         else
           echo "Aborting build since triggered from non-master branch"
-          exit 0
+          exit 1
         fi
     - name: Determine versions (when git tag)
       if: github.ref_type == 'tag'
