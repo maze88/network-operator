@@ -4,7 +4,6 @@ on:
   push:
     branches:
     - "master"
-    - "feature/ghci"  # TODO: remove after testing
     - "v[0-9]+.[0-9]+.x"
     tags:
     - 'v[0-9]+.[0-9]+.[0-9]+*'
@@ -36,12 +35,12 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ secrets.NVCR_USERNAME }}
         password: ${{ secrets.NVCR_TOKEN }}
-    # - name: Make build and push  #TODO: once ready, uncomment
-    #   run: |
-    #     echo "Docker tags will be: $DOCKER_TAGS"
-    #     for docker_tag in $DOCKER_TAGS; do
-    #       make VERSION=$docker_tag image-build-multiarch image-push-multiarch
-    #     done
+    - name: Make build and push
+      run: |
+        echo "Docker tags will be: $DOCKER_TAGS"
+        for docker_tag in $DOCKER_TAGS; do
+          make VERSION=$docker_tag image-build-multiarch image-push-multiarch
+        done
 
   helm-package-publish:
     needs: docker-build-push
@@ -85,10 +84,10 @@ jobs:
           mellanox
           no-ace
         EOF
-    # - name: Make package and push  # TODO: once ready, uncomment
-    #   if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
-    #   run: |
-    #     make chart-build chart-push
+    - name: Make package and push
+      if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
+      run: |
+        make chart-build chart-push
     - name: NGC logout
       if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
       run: |
