@@ -24,7 +24,7 @@ jobs:
       if: github.ref_type == 'branch'
       run: |
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
-        latest=${{ github.ref_name == 'master' && 'latest' || '' }}  # 'latest', if branch is master
+        latest=${{ github.ref_name == 'feature/ghci' && 'latest' || '' }}  # 'latest', if branch is master  # TODO: revert branch name to master after test
         echo DOCKER_TAGS=""$git_sha $latest"" >> $GITHUB_ENV
     - name: Determine docker tags (when git tag)
       if: github.ref_type == 'tag'
