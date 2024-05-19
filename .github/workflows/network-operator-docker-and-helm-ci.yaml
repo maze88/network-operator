@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - "master"
+    - "feature/ghci"  # TODO: remove after testing
     - "v[0-9]+.[0-9]+.x"
     tags:
     - 'v[0-9]+.[0-9]+.[0-9]+*'
@@ -29,18 +30,18 @@ jobs:
       if: github.ref_type == 'tag'
       run: |
         git_tag=${{ github.ref_name }}
-        echo DOCKER_TAGS=""$$git_tag"" >> $GITHUB_ENV
+        echo DOCKER_TAGS=""$git_tag"" >> $GITHUB_ENV
     - uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ secrets.NVCR_USERNAME }}
         password: ${{ secrets.NVCR_TOKEN }}
-    - name: Make build and push
-      run: |
-        echo "Docker tags will be: $DOCKER_TAGS"
-        for docker_tag in $DOCKER_TAGS; do
-          make VERSION=$docker_tag image-build-multiarch image-push-multiarch
-        done
+    # - name: Make build and push  #TODO: once ready, uncomment
+    #   run: |
+    #     echo "Docker tags will be: $DOCKER_TAGS"
+    #     for docker_tag in $DOCKER_TAGS; do
+    #       echo make VERSION=$docker_tag image-build-multiarch image-push-multiarch
+    #     done
 
   helm-package-publish:
     needs: docker-build-push
@@ -77,9 +78,9 @@ jobs:
           mellanox
           no-ace
         EOF
-    - name: Make package and push
-      run: |
-        make chart-build chart-push
+    # - name: Make package and push  # TODO: once ready, uncomment
+    #   run: |
+    #     make chart-build chart-push
     - name: NGC logout
       run: |
         ngc config clear-cache
