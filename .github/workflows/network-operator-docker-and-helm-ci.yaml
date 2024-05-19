@@ -5,26 +5,31 @@ on:
     branches:
     - "master"
     - "v[0-9]+.[0-9]+.x"
+    tags:
+    - 'v[0-9]+.[0-9]+.[0-9]+*'
 
 env:
   REGISTRY: nvcr.io/nvstaging/mellanox  # for docker
-  IMAGE_NAME: network-operator
+  IMAGE_NAME: network-operator-mzeevi-test  # TODO: remove suffix after testing
   VALID_TAG_REGEX: 'v[0-9]+\.[0-9]+\.[0-9]+(-(beta|rc)\.[0-9]+)?'
-  NGC_REPO: nvstaging/mellanox/network-operator  # for helm
+  NGC_REPO: nvstaging/mellanox/network-operator-mzeevi-test  # for helm  # TODO: remove suffix after testing
 
 jobs:
   docker-build-push:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-tags: true
-    - name: Determine docker tags
+    - name: Determine docker tags (from git branch)
+      if: github.ref_type == 'branch'
       run: |
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
-        git_tag=$(git describe --tags --exact-match 2>/dev/null | grep -E '${{ env.VALID_TAG_REGEX}}' || true)  # git tag, if it exists
-        latest=$(git branch --show-current | grep -q 'master' && echo 'latest' || true)  # 'latest', if branch is master
-        echo DOCKER_TAGS=""$git_sha $git_tag $latest"" >> $GITHUB_ENV
+        latest=${{ github.ref_name == 'master' && 'latest' || '' }}  # 'latest', if branch is master
+        echo DOCKER_TAGS=""$git_sha $latest"" >> $GITHUB_ENV
+    - name: Determine docker tags (from git tag)
+      if: github.ref_type == 'tag'
+      run: |
+        git_tag=${{ github.ref_name }}
+        echo DOCKER_TAGS=""$$git_tag"" >> $GITHUB_ENV
     - uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
@@ -42,22 +47,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-tags: true
-    - name: Determine versions
+    - name: Determine versions (from git branch)
+      if: github.ref_type == 'branch'
       run: |
-        git_tag=$(git describe --tags --exact-match 2>/dev/null | grep -E '${{ env.VALID_TAG_REGEX}}' || true)  # git tag, if it exists
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
         chart_current_version=$(yq '.version' deployment/network-operator/Chart.yaml)
-
-        if [ -n "$git_tag" ]; then
-          app_version=$git_tag
-          chart_version=${git_tag:1}  # without the 'v' prefix
-        elif [ $(git branch --show-current) == "master" ]; then
-          app_version=$git_sha
-          chart_version=$chart_current_version-$git_sha
-        fi
-
+        app_version=$git_sha
+        chart_version=$chart_current_version-$git_sha
+        echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
+        echo VERSION=""$chart_version""   >> $GITHUB_ENV
+    - name: Determine versions (from git tag)
+      if: github.ref_type == 'tag'
+      run: |
+        git_tag=${{ github.ref_name }}
+        app_version=$git_tag
+        chart_version=${git_tag:1}  # without the 'v' prefix
         echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
         echo VERSION=""$chart_version""   >> $GITHUB_ENV
     - name: NGC authentication
