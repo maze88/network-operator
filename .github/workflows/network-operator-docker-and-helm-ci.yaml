@@ -24,7 +24,7 @@ jobs:
       if: github.ref_type == 'branch'
       run: |
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
-        latest=${{ github.ref_name == 'feature/ghci' && 'latest' || '' }}  # 'latest', if branch is feature/ghci  # TODO: revert branch name to feature/ghci after test
+        latest=${{ github.ref_name == 'master' && 'latest' || '' }}  # 'latest', if branch is master
         echo DOCKER_TAGS=""$git_sha $latest"" >> $GITHUB_ENV
     - name: Determine docker tags (when git tag)
       if: github.ref_type == 'tag'
@@ -49,7 +49,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Determine versions (when git branch)
-      if: github.ref_name == 'feature/ghci'
+      if: github.ref_name == 'master'
       run: |
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
         chart_current_version=$(yq '.version' deployment/network-operator/Chart.yaml)
@@ -68,7 +68,7 @@ jobs:
         echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
         echo VERSION=""$chart_version""   >> $GITHUB_ENV
     - name: NGC authentication
-      if: github.ref_name == 'feature/ghci' || github.ref_type == 'tag'  # skip if not *tagged* or *feature/ghci* branch 
+      if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
       run: |
         wget \
           --no-verbose \
@@ -86,11 +86,11 @@ jobs:
           no-ace
         EOF
     # - name: Make package and push  # TODO: once ready, uncomment
-    #   if: github.ref_name == 'feature/ghci' || github.ref_type == 'tag'  # skip if not *tagged* or *feature/ghci* branch 
+    #   if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
     #   run: |
     #     make chart-build chart-push
     - name: NGC logout
-      if: github.ref_name == 'feature/ghci' || github.ref_type == 'tag'  # skip if not *tagged* or *feature/ghci* branch 
+      if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
       run: |
         ngc config clear-cache
         ngc config clear
