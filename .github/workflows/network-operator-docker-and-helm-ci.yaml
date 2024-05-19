@@ -40,7 +40,7 @@ jobs:
     #   run: |
     #     echo "Docker tags will be: $DOCKER_TAGS"
     #     for docker_tag in $DOCKER_TAGS; do
-    #       echo make VERSION=$docker_tag image-build-multiarch image-push-multiarch
+    #       make VERSION=$docker_tag image-build-multiarch image-push-multiarch
     #     done
 
   helm-package-publish:
