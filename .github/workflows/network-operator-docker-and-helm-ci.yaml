@@ -10,8 +10,7 @@ on:
 
 env:
   REGISTRY: nvcr.io/nvstaging/mellanox  # for docker
-  IMAGE_NAME: network-operator-mzeevi-test  # TODO: remove suffix after testing
-  VALID_TAG_REGEX: 'v[0-9]+\.[0-9]+\.[0-9]+(-(beta|rc)\.[0-9]+)?'
+  IMAGE_NAME: network-operator-mzeevi-test  # used in makefile           # TODO: remove suffix after testing
   NGC_REPO: nvstaging/mellanox/network-operator-mzeevi-test  # for helm  # TODO: remove suffix after testing
 
 jobs:
@@ -19,14 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Determine docker tags (when git branch)
-      if: github.ref_type == 'branch'
+    - if: github.ref_type == 'branch'
+      name: Determine docker tags (when git branch)
       run: |
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
         latest=${{ github.ref_name == 'master' && 'latest' || '' }}  # 'latest', if branch is master
         echo DOCKER_TAGS=""$git_sha $latest"" >> $GITHUB_ENV
-    - name: Determine docker tags (when git tag)
-      if: github.ref_type == 'tag'
+    - if: github.ref_type == 'tag'
+      name: Determine docker tags (when git tag)
       run: |
         git_tag=${{ github.ref_name }}
         echo DOCKER_TAGS=""$git_tag"" >> $GITHUB_ENV
@@ -46,28 +45,25 @@ jobs:
     needs: docker-build-push
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Determine versions (when git branch)
-      if: github.ref_name == 'master'
+    - if: github.ref_name == 'master' || github.ref_type == 'tag'
+      uses: actions/checkout@v4
+    - if: github.ref_name == 'master'
+      name: Determine versions (when git branch)
       run: |
-        git_sha=$(git rev-parse --short HEAD)  # short git commit hash
-        chart_current_version=$(yq '.version' deployment/network-operator/Chart.yaml)
-        app_version=$git_sha
-        chart_version=$chart_current_version-$git_sha
-
-        echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
-        echo VERSION=""$chart_version""   >> $GITHUB_ENV
-    - name: Determine versions (when git tag)
-      if: github.ref_type == 'tag'
+        app_version=$(git rev-parse --short HEAD)  # short git commit hash
+        current_chart_version=$(yq '.version' deployment/network-operator/Chart.yaml)
+        echo APP_VERSION=""$app_version""                    >> $GITHUB_ENV
+        echo VERSION=""$current_chart_version-$app_version"" >> $GITHUB_ENV
+    - if: github.ref_type == 'tag'
+      name: Determine versions (when git tag)
       run: |
         git_tag=${{ github.ref_name }}
         app_version=$git_tag
         chart_version=${git_tag:1}  # without the 'v' prefix
-
         echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
         echo VERSION=""$chart_version""   >> $GITHUB_ENV
-    - name: NGC authentication
-      if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
+    - if: github.ref_name == 'master' || github.ref_type == 'tag'
+      name: NGC authentication
       run: |
         wget \
           --no-verbose \
@@ -84,12 +80,12 @@ jobs:
           mellanox
           no-ace
         EOF
-    - name: Make package and push
-      if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
+    - if: github.ref_name == 'master' || github.ref_type == 'tag'
+      name: Make package and push
       run: |
         make chart-build chart-push
-    - name: NGC logout
-      if: github.ref_name == 'master' || github.ref_type == 'tag'  # skip if not *tagged* or *master* branch 
+    - if: github.ref_name == 'master' || github.ref_type == 'tag'
+      name: NGC logout
       run: |
         ngc config clear-cache
         ngc config clear
