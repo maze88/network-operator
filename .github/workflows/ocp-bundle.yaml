@@ -1,0 +1,55 @@
+# migrated from: ~/projects/jenkins-confs/jenkins-files/network-operator/ocp-bundle-push.jenkinsfile
+name: Package OCP Bundle
+
+on:
+  push:
+    branches:
+    - "master"
+    - "feature/ocp-bundle"  # TODO: remove before merging
+    tags:
+    - "v[0-9]+.[0-9]+.[0-9]+*"  # TODO: set `version` from tag and `tag` without the prefix "v"  # TODO: safe to remove wild card from end of pattern?
+
+jobs:
+  ocp-package:
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_BRANCH: master
+      REGISTRY: nvcr.io/nvstaging/mellanox
+    steps:
+    - uses: actions/checkout@v4
+    - if: github.ref_name == env.DEFAULT_BRANCH
+      name: Determine docker tag (when git branch)
+      run: |
+        echo APP_VERSION=""latest"" >> $GITHUB_ENV
+        echo VERSION=latest         >> $GITHUB_ENV
+    - if: github.ref_type == 'tag'
+      name: Determine docker tag (when git tag)
+      run: |
+        version=${{ github.ref_name }}
+        tag=${version:1}  # without the 'v' prefix
+        echo APP_VERSION=""$app_version"" >> $GITHUB_ENV
+        echo VERSION=""$chart_version""   >> $GITHUB_ENV
+    - uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ secrets.NVCR_USERNAME }}
+        password: ${{ secrets.NVCR_TOKEN }}
+    - name: Make bundle
+      run: |
+        echo "Docker tag will be: $DOCKER_TAG"
+        env | grep TAG      # debug
+        env | grep VERSION  # debug
+        which jq      # TODO: is this required?
+        which skopeo  # TODO: is this required?
+
+        make operator-sdk image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
+
+# pseudo code steps
+env vars to add/define:
+  BASE_NAME: network-operator
+  IMAGE_NAME: ${REGISTRY}/${BASE_NAME}:${version}
+  BUNDEL_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # noam angel approved to change to nvstaging; but we should PoC
+  BUNDEL_NAME: network-operator-bundle
+  TAG=${IMAGE_NAME}
+  DEFAULT_CHANNEL=stable CHANNELS=stable,${version} VERSION=${tag} TAG=${REGISTRY}/${BASE_NAME}:${version}
+  BUNDLE_IMG=${BUNDEL_REGISTRY}/${BUNDEL_NAME}:${version} 
