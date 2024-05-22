@@ -4,8 +4,8 @@ name: Package OCP Bundle
 on:
   push:
     branches:
-    - "master"
     - "feature/ocp-bundle"  # TODO: remove before merging
+    - "master"
     tags:
     - "v[0-9]+.[0-9]+.[0-9]+*"  # TODO: set `version` from tag and `tag` without the prefix "v"  # TODO: safe to remove wild card from end of pattern?
 
@@ -15,12 +15,15 @@ jobs:
     env:
       DEFAULT_BRANCH: master
       REGISTRY: nvcr.io/nvstaging/mellanox
+      IMAGE_NAME: network-operator
+      BUNDLE_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # noam angel approved to change to nvstaging; but we should PoC
+      BUNDLE_IMAGE_NAME: ${{ env.IMAGE_NAME }}-bundle
     steps:
     - uses: actions/checkout@v4
     - if: github.ref_name == env.DEFAULT_BRANCH
       name: Determine docker tag (when git branch)
       run: |
-        echo APP_VERSION=""latest"" >> $GITHUB_ENV
+        echo APP_VERSION=""latest"" >> $GITHUB_ENV  # TODO: test if double quotes required
         echo VERSION=latest         >> $GITHUB_ENV
     - if: github.ref_type == 'tag'
       name: Determine docker tag (when git tag)
@@ -35,21 +38,20 @@ jobs:
         username: ${{ secrets.NVCR_USERNAME }}
         password: ${{ secrets.NVCR_TOKEN }}
     - name: Make bundle
+      env:
+        TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}  # TODO: validate env var substituion successful
+        BUNDLE_IMG: ${{ env.BUNDLE_REGISTRY }/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION }}
+        DEFAULT_CHANNEL: stable
+        CHANNELS: stable,${{ env.VERSION }}
+        VERSION: ${tag}                            # TODO: ammend
+        TAG: ${REGISTRY}/${IMAGE_NAME}:${version}  # TODO: ammend
       run: |
-        echo "Docker tag will be: $DOCKER_TAG"
-        env | grep TAG      # debug
-        env | grep VERSION  # debug
-        which jq      # TODO: is this required?
-        which skopeo  # TODO: is this required?
+        env  # TODO: validate all above env vars are properly created with their full values
+        which jq      # TODO: where is this even required?
+        which skopeo  # TODO: where is this even required?
 
+        echo "Docker tag will be: $DOCKER_TAG"  # TODO: add bundle sanity echo too
         make operator-sdk image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
 
 # pseudo code steps
 env vars to add/define:
-  BASE_NAME: network-operator
-  IMAGE_NAME: ${REGISTRY}/${BASE_NAME}:${version}
-  BUNDEL_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # noam angel approved to change to nvstaging; but we should PoC
-  BUNDEL_NAME: network-operator-bundle
-  TAG=${IMAGE_NAME}
-  DEFAULT_CHANNEL=stable CHANNELS=stable,${version} VERSION=${tag} TAG=${REGISTRY}/${BASE_NAME}:${version}
-  BUNDLE_IMG=${BUNDEL_REGISTRY}/${BUNDEL_NAME}:${version} 
