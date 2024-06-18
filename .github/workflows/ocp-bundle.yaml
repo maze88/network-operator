@@ -13,7 +13,7 @@ jobs:
   ocp-package:
     runs-on: ubuntu-latest
     env:
-      DEFAULT_BRANCH: feature/ocp-bundle  # TODO: revert to 'master' when done
+      DEFAULT_BRANCH: feature/ocp-bundle # master  # TODO: revert to 'master' when done
       REGISTRY: nvcr.io/nvstaging/mellanox
       IMAGE_NAME: network-operator
       # BUNDLE_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # noam angel approved to change to nvstaging; requested we PoC it
@@ -38,15 +38,21 @@ jobs:
         password: ${{ secrets.NVCR_TOKEN }}
     - name: Make bundle
       env:
-        TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}  # TODO: validate env var substituion successful
+        TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}
         BUNDLE_IMG: ${{ env.REGISTRY }}/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}
         DEFAULT_CHANNEL: stable
         CHANNELS: stable,${{ env.VERSION_WITH_PREFIX }}
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
       run: |
-        env           # TODO: validate all above env vars are properly created with their full values
-        which jq      # TODO: where is this even required?
-        which skopeo  # TODO: where is this even required?
-
-        echo "Docker tag will be: $DOCKER_TAG"  # TODO: add bundle sanity echo too
-        make image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
+        which go      # TODO: checking for something else...
+        echo "Bundle tag will be: $BUNDLE_IMG"
+        # make image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
+        # TODO: fine-grain separate make targets, to see which fails
+        echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        make image
+        echo BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+        make release-build
+        echo CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+        make bundle
+        echo DDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+        make bundle-build
