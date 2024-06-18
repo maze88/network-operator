@@ -13,7 +13,7 @@ jobs:
   ocp-package:
     runs-on: ubuntu-latest
     env:
-      DEFAULT_BRANCH: master
+      DEFAULT_BRANCH: feature/ocp-bundle  # TODO: revert to 'master' when done
       REGISTRY: nvcr.io/nvstaging/mellanox
       IMAGE_NAME: network-operator
       # BUNDLE_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # noam angel approved to change to nvstaging; requested we PoC it
