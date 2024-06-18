@@ -44,7 +44,6 @@ jobs:
         CHANNELS: stable,${{ env.VERSION_WITH_PREFIX }}
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
       run: |
-        which go      # TODO: checking for something else...
         echo "Bundle tag will be: $BUNDLE_IMG"
         # make image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
         # TODO: fine-grain separate make targets, to see which fails
