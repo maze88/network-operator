@@ -17,7 +17,7 @@ jobs:
       REGISTRY: nvcr.io/nvstaging/mellanox
       IMAGE_NAME: network-operator
       # BUNDLE_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # noam angel approved to change to nvstaging; requested we PoC it
-      BUNDLE_IMAGE_NAME: ${{ env.IMAGE_NAME }}-bundle
+      BUNDLE_IMAGE_NAME: network-operator-bundle
     steps:
     - uses: actions/checkout@v4
     - if: github.ref_name == env.DEFAULT_BRANCH
@@ -39,7 +39,7 @@ jobs:
     - name: Make bundle
       env:
         TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}  # TODO: validate env var substituion successful
-        BUNDLE_IMG: ${{ env.BUNDLE_REGISTRY }/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}
+        BUNDLE_IMG: ${{ env.REGISTRY }}/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}
         DEFAULT_CHANNEL: stable
         CHANNELS: stable,${{ env.VERSION_WITH_PREFIX }}
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
