@@ -23,14 +23,14 @@ jobs:
     - if: github.ref_name == env.DEFAULT_BRANCH
       name: Determine docker tag (when git branch)
       run: |
-        echo VERSION_WITH_PREFIX=latest           >> $GITHUB_ENV
-        echo VERSION_WITHOUT_PREFIX=latest >> $GITHUB_ENV
+        echo VERSION_WITH_PREFIX=v0.0.0-$(git rev-parse --short HEAD) >> $GITHUB_ENV  # mock version - to be used only for internal testing!
+        echo VERSION_WITHOUT_PREFIX=${VERSION_WITH_PREFIX:1}          >> $GITHUB_ENV
     - if: github.ref_type == 'tag'
       name: Determine docker tag (when git tag)
       run: |
-        version=${{ github.ref_name }}
-        echo VERSION_WITH_PREFIX=$version               >> $GITHUB_ENV
-        echo VERSION_WITHOUT_PREFIX=${version:1} >> $GITHUB_ENV  # without the 'v' prefix
+        git_tag=${{ github.ref_name }}
+        echo VERSION_WITH_PREFIX=$git_tag        >> $GITHUB_ENV
+        echo VERSION_WITHOUT_PREFIX=${git_tag:1} >> $GITHUB_ENV  # without the 'v' prefix
     - uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
@@ -46,12 +46,12 @@ jobs:
       run: |
         echo "Bundle tag will be: $BUNDLE_IMG"
         # make image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
-        # TODO: fine-grain separate make targets, to see which fails
-        echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        # TODO: revert fine-grain separate make targets (instead of line above), after troubleshooting
+        echo 'DEBUG AAAAA'
         make image
-        echo BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+        echo 'DEBUG BBBBB'
         make release-build
-        echo CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-        make bundle
-        echo DDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+        echo 'DEBUG CCCCC'
+        make bundle  # TODO: troubleshoot this command: https://github.com/maze88/network-operator/actions/runs/9566948719/job/26373450337#step:6:1170
+        echo 'DEBUG DDDDD'
         make bundle-build
