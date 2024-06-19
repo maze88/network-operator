@@ -24,7 +24,8 @@ jobs:
       name: Determine docker tag (when git branch)
       run: |
         echo VERSION_WITH_PREFIX=v0.0.0-$(git rev-parse --short HEAD) >> $GITHUB_ENV  # mock version - to be used only for internal testing!
-        echo VERSION_WITHOUT_PREFIX=${VERSION_WITH_PREFIX:1}          >> $GITHUB_ENV
+        echo VERSION_WITHOUT_PREFIX=${VERSION_WITH_PREFIX:1:5}          >> $GITHUB_ENV
+        # echo VERSION_WITHOUT_PREFIX=${VERSION_WITH_PREFIX:1}          >> $GITHUB_ENV
     - if: github.ref_type == 'tag'
       name: Determine docker tag (when git tag)
       run: |
