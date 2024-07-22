@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEFAULT_BRANCH: feature/ocp-bundle # master  # TODO: revert to 'master' when done
-      REGISTRY: nvcr.io/nvstaging/mellanox
+      REGISTRY: nvcr.io/nvstaging/mellanox  # TODO: noam angel approved to change to nvstaging; requested we PoC it
+      # BUNDLE_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # TODO: rm after checking the above
       IMAGE_NAME: network-operator
-      # BUNDLE_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # noam angel approved to change to nvstaging; requested we PoC it
       BUNDLE_IMAGE_NAME: network-operator-bundle
     steps:
     - uses: actions/checkout@v4
@@ -53,6 +53,6 @@ jobs:
         echo 'DEBUG BBBBB'
         make release-build
         echo 'DEBUG CCCCC'
-        make bundle  # TODO: troubleshoot this command: https://github.com/maze88/network-operator/actions/runs/9566948719/job/26373450337#step:6:1170
+        make bundle  # TODO: troubleshoot this command: https://github.com/maze88/network-operator/actions/runs/9566948719/job/26373450337#step:6:1171
         echo 'DEBUG DDDDD'
         make bundle-build
