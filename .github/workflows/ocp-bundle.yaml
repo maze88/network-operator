@@ -3,11 +3,10 @@ name: Package OCP Bundle
 
 on:
   push:
-    branches:
-    - "feature/ocp-bundle"  # TODO: remove before merging
-    - "master"
     tags:
     - "v[0-9]+.[0-9]+.[0-9]+*"  # TODO: safe to remove wild card from end of pattern?
+    branches:
+    - "feature/ocp-bundle"  # TODO: remove before merging
 
 jobs:
   ocp-package:
@@ -15,17 +14,14 @@ jobs:
     env:
       DEFAULT_BRANCH: feature/ocp-bundle # master  # TODO: revert to 'master' when done
       REGISTRY: nvcr.io/nvstaging/mellanox  # TODO: noam angel approved to change to nvstaging; requested we PoC it
-      # BUNDLE_REGISTRY: harbor.mellanox.com/cloud-orchestration-dev  # TODO: rm after checking the above
       IMAGE_NAME: network-operator
       BUNDLE_IMAGE_NAME: network-operator-bundle
     steps:
     - uses: actions/checkout@v4
-    - if: github.ref_name == env.DEFAULT_BRANCH
-      name: Determine docker tag (when git branch)
+    - if: github.ref_name == env.DEFAULT_BRANCH  # TODO: remove this option entirely (we only need tag trigger), after developing
       run: |
-        echo VERSION_WITH_PREFIX=v0.0.0-$(git rev-parse --short HEAD) >> $GITHUB_ENV  # mock version - to be used only for internal testing!
-        echo VERSION_WITHOUT_PREFIX=${VERSION_WITH_PREFIX:1:5}          >> $GITHUB_ENV
-        # echo VERSION_WITHOUT_PREFIX=${VERSION_WITH_PREFIX:1}          >> $GITHUB_ENV
+        echo VERSION_WITH_PREFIX=v99.9.9-beta.9   >> $GITHUB_ENV  # mock version - to be used only for internal testing!
+        echo VERSION_WITHOUT_PREFIX=99.9.9-beta.9 >> $GITHUB_ENV  # mock version - to be used only for internal testing!
     - if: github.ref_type == 'tag'
       name: Determine docker tag (when git tag)
       run: |
@@ -39,20 +35,16 @@ jobs:
         password: ${{ secrets.NVCR_TOKEN }}
     - name: Make bundle
       env:
-        TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}
-        BUNDLE_IMG: ${{ env.REGISTRY }}/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}
         DEFAULT_CHANNEL: stable
         CHANNELS: stable,${{ env.VERSION_WITH_PREFIX }}
+        TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}
+        BUNDLE_IMG: ${{ env.REGISTRY }}/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}-mzeevi-test-deleteme  # TODO: remove test suffix, after developing
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
+        NGC_CLI_API_KEY: ${{ secrets.NVCR_TOKEN }}
       run: |
-        echo "Bundle tag will be: $BUNDLE_IMG"
-        # make image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
-        # TODO: revert fine-grain separate make targets (instead of line above), after troubleshooting
-        echo 'DEBUG AAAAA'
-        make image
-        echo 'DEBUG BBBBB'
-        make release-build
-        echo 'DEBUG CCCCC'
-        make bundle  # TODO: troubleshoot this command: https://github.com/maze88/network-operator/actions/runs/9566948719/job/26373450337#step:6:1171
-        echo 'DEBUG DDDDD'
-        make bundle-build
+        echo "Bundle full tag will be: $BUNDLE_IMG"
+        make image release-build bundle bundle-build # bundle-push  # TODO: only push when build result is satisfying
+        echo AAAA
+        make bundle-push                                          # TODO: only push when build result is satisfying
+        echo AAAA
+        # TODO: automate PR creation to redhat openshift certified operators
