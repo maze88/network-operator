@@ -9,7 +9,7 @@ on:
     - "feature/ocp-bundle"
 
 jobs:
-  ocp_package:
+  package_ocp:
     runs-on: ubuntu-latest
     env:
       REGISTRY: nvcr.io/nvstaging/mellanox  # TODO: noam angel approved to change to nvstaging; requested we PoC it
@@ -31,9 +31,9 @@ jobs:
         git_tag=${{ github.ref_name }}
         echo VERSION_WITH_PREFIX=$git_tag        >> $GITHUB_ENV
         echo VERSION_WITHOUT_PREFIX=${git_tag:1} >> $GITHUB_ENV  # without the 'v' prefix
-        echo VERSION_WITH_PREFIX=v99.9.9-beta.9   >> $GITHUB_ENV  # TODO: remove mock version - to be used only for development testing!
-        echo VERSION_WITHOUT_PREFIX=99.9.9-beta.9 >> $GITHUB_ENV  # TODO: remove mock version - to be used only for development testing!
-        git_tag=v24.4.0  # TODO: remove mock version after development
+        echo VERSION_WITH_PREFIX=v99.9.9-beta.2   >> $GITHUB_ENV  # TODO: remove mock version - to be used only for development testing!
+        echo VERSION_WITHOUT_PREFIX=99.9.9-beta.2 >> $GITHUB_ENV  # TODO: remove mock version - to be used only for development testing!
+        git_tag=v24.4.0                                           # TODO: remove mock version after development
         network_operator_digest=$(skopeo inspect docker://nvcr.io/nvstaging/mellanox/network-operator:$git_tag | jq -r .Digest)
         echo $network_operator_digest | wc -w | grep 1  # verifies value not empty
         echo NETWORK_OPERATOR_DIGEST=$network_operator_digest >> $GITHUB_ENV
@@ -42,73 +42,78 @@ jobs:
       env:
         DEFAULT_CHANNEL: ${{ env.VERSION_WITH_PREFIX }}
         CHANNELS: stable,${{ env.VERSION_WITH_PREFIX }}
-        TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ env.NETWORK_OPERATOR_DIGEST }}  # TODO: check if should use `:${{ env.VERSION_WITH_PREFIX }}` or `@${{ env.NETWORK_OPERATOR_DIGEST }}`
+        TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ env.NETWORK_OPERATOR_DIGEST }}
         BUNDLE_IMG: ${{ env.REGISTRY }}/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}-mzeevi-test-deleteme  # TODO: remove "mzeevi-test-deleteme" suffix, after development
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
         NGC_CLI_API_KEY: ${{ secrets.NVCR_TOKEN }}
       run: |
         echo "Bundle full tag will be: $BUNDLE_IMG"
         make bundle # bundle-build bundle-push  # TODO: uncomment last targets, after development  # TODO: confirm we can ommit `image` and `release-build` targets
-        echo BUNDLE_FULL_IMAGE_NAME=$BUNDLE_IMG >> $GITHUB_OUTPUT
-    - name: Commit bundle to repository
+    - name: Commit bundle to Network-Operator
+      env:
+        FEATURE_BRANCH_NAME: feature/update-ocp-bundle-to-${{ env.VERSION_WITH_PREFIX }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
       run: |
+        echo DEBUG1 $FEATURE_BRANCH_NAME  # debug
+        git config user.name  nvidia-ci-cd
+        git config user.email svc-cloud-orch-gh@nvidia.com
+
+        git fetch origin master
+        git status        # debug
+        git diff --color  # debug
+        git checkout master
+        git checkout -b $FEATURE_BRANCH_NAME
+        git commit -sam "task: update bundle to $VERSION_WITH_PREFIX"
+
+        git push -u origin $FEATURE_BRANCH_NAME
+        gh pr create \
+          --head $FEATURE_BRANCH_NAME \
+          --base master \
+          --fill \
+          --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+        gh pr merge --admin --merge $FEATURE_BRANCH_NAME  # requires repository settings to "allow auto-merge"
+    # TODO: automate PR creation to redhat openshift certified operators
+    - name: Determine if to send bundle to RedHat
+      id: determine-if-to-send-bundle-to-redhat
+      run: |
+        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo false) >> $GITHUB_ENV
+    - uses: actions/checkout@v4
+      if: ${{ env.SEND_BUNDLE_TO_REDHAT }}  # TODO: validate condition works (also with a `!` prefix to the condtion)
+      with:
+        # token: ${{ secrets.GITHUB_TOKEN }}  # TODO: see if the default token has sufficient permissions for *commiting*, else use `GH_TOKEN_NVIDIA_CI_CD`
+        token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
+        # repository: redhat-openshift-ecosystem/certified-operators  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging  # TODO: create a fork for testing
+        repository: maze88/certified-operators  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
+        path: certified-operators
+    - name: Create PR with bundle to RedHat
+      if: ${{ env.SEND_BUNDLE_TO_REDHAT }}  # TODO: validate condition works (also with a `!` prefix to the condtion)
+      env:
+        FEATURE_BRANCH_NAME: feature/nvidia-network-operator-bundle-${{ env.VERSION_WITHOUT_PREFIX }}
+        NEW_BUNDLE_DIR: certified-operators/operators/nvidia-network-operator/${{ env.VERSION_WITHOUT_PREFIX }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # TODO: see if the default token has sufficient permissions, else use `GH_TOKEN_NVIDIA_CI_CD`
+        # GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
+      run: |
+        echo DEBUG2 $FEATURE_BRANCH_NAME  # debug
+        pwd     # debug
+        ls -lh  # debug
+
         git config user.name  nvidia-ci-cd
         git config user.email svc-cloud-orch-gh@nvidia.com
 
         git fetch origin master
         git checkout master
+        git checkout -b $FEATURE_BRANCH_NAME
+        mkdir -p $NEW_BUNDLE_DIR
+        cp -r bundle/* $NEW_BUNDLE_DIR
         git status        # debug
         git diff --color  # debug
-        git checkout -b feature/update-ocp-bundle-to-${{ github.ref_name }}
-        git commit -sam "task: update bundle to ${{ github.ref_name }}"  # TODO: consider adding specific `git add bundle/` command
-        # TODO: push
-        # TODO: create PR
-        # TODO: merge PR
+        git commit -sam "feat: add nvidia/network-operator-bundle-$VERSION_WITHOUT_PREFIX"
 
-    - name: Determine if to send bundle to RedHat
-      id: determine-if-to-send-bundle-to-redhat
-      run: |
-        echo SEND_BUNDLE_TO_REDHAT=$(${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]$" && echo true || echo false) >> $GITHUB_OUTPUT
-    outputs:
-      bundle_full_image_name: ${{ steps.make-bundle.outputs.BUNDLE_FULL_IMAGE_NAME }}
-      send_bundle_to_redhat: ${{ steps.determine-if-to-send-bundle-to-redhat.outputs.SEND_BUNDLE_TO_REDHAT }}
-
-  # TODO: automate PR creation to redhat openshift certified operators
-  send_bundle_to_redhat:
-    needs:
-    - ocp_package
-    if: ${{ ! needs.ocp_package.outputs.send_bundle_to_redhat }}  # TODO: validate condition works (also with a `!` prefix to the condtion)
-    runs-on: ubuntu-latest
-    env:
-      BUNDLE_FULL_IMAGE_NAME: ${{ needs.ocp_package.outputs.bundle_full_image_name }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # TODO: see if the default token has sufficient permissions, else use `GH_TOKEN_NVIDIA_CI_CD`
-      # GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        # token: ${{ secrets.GITHUB_TOKEN }}  # TODO: see if the default token has sufficient permissions for *commiting*, else use `GH_TOKEN_NVIDIA_CI_CD`
-        token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
-        repository: redhat-openshift-ecosystem/certified-operators  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging  TODO: create a fork for testing
-        path: certified-operators
-    - name: Create PR with bundle to RedHat
-      env:
-        NEW_BUNDLE_DIR: certified-operators/operators/nvidia-network-operator/$VERSION_TBD
-      run: |
-        git config user.name  nvidia-ci-cd
-        git config user.email svc-cloud-orch-gh@nvidia.com
-
-        # git checkout -b feature/nvidia-network-operator-bundle-$VERSION_TBD
-        # mkdir -p $NEW_BUNDLE_DIR
-        # cp -r bundle/* $NEW_BUNDLE_DIR
-        #
-
-        # if ! git diff --color --unified=0 --exit-code; then
-        #   git commit -sam "task: update SR-IOV images tags to $DOCKER_TAG in chart values"
-        #   git push -u origin feature/update-sriov-tags-to-$DOCKER_TAG
-        #   gh pr create \
-        #     --repo redhat-openshift-ecosystem/certified-operators \
-        #     --base main \
-        #     --head $(git branch --show-current) \
-        #     --fill \
-        #     --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-        # fi  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging  TODO: create a fork for testing
+        git push -u origin $FEATURE_BRANCH_NAME
+        gh pr create \
+          --repo maze88/certified-operators \
+          --head $FEATURE_BRANCH_NAME \
+          --base main \
+          --fill \
+          --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+        # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
