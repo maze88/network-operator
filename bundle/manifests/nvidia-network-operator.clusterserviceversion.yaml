@@ -89,7 +89,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2024-07-28T07:10:52Z"
+    createdAt: "2024-07-28T14:30:34Z"
     description: Deploy and manage NVIDIA networking resources in Kubernetes
     features.operators.openshift.io/disconnected: "true"
     features.operators.openshift.io/fips-compliant: "false"
@@ -104,7 +104,7 @@ metadata:
     provider: NVIDIA
     repository: https://github.com/Mellanox/network-operator/
     support: NVIDIA
-  name: nvidia-network-operator.v99.9.9-beta.9
+  name: nvidia-network-operator.v99.9.9-beta.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -688,7 +688,7 @@ spec:
   provider:
     name: NVIDIA
     url: https://github.com/Mellanox/network-operator/
-  version: 99.9.9-beta.9
+  version: 99.9.9-beta.2
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
