@@ -50,28 +50,30 @@ jobs:
         echo "Bundle full tag will be: $BUNDLE_IMG"
         make bundle # bundle-build bundle-push  # TODO: uncomment last targets, after development  # TODO: confirm we can ommit `image` and `release-build` targets
     - name: Commit bundle to Network-Operator
+      if: false  # TODO: temporarily disabled while developing pr to rh step
       env:
-        FEATURE_BRANCH_NAME: feature/update-ocp-bundle-to-${{ env.VERSION_WITH_PREFIX }}
+        DEFAULT_BRANCH: feature/ocp-bundle  # TODO: revert to `master` before merging
+        FEATURE_BRANCH: feature/update-ocp-bundle-to-${{ env.VERSION_WITH_PREFIX }}
         GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
       run: |
-        echo DEBUG1 $FEATURE_BRANCH_NAME  # debug
         git config user.name  nvidia-ci-cd
         git config user.email svc-cloud-orch-gh@nvidia.com
 
-        git fetch origin master
+        git fetch origin $DEFAULT_BRANCH
         git status        # debug
         git diff --color  # debug
-        git checkout master
-        git checkout -b $FEATURE_BRANCH_NAME
-        git commit -sam "task: update bundle to $VERSION_WITH_PREFIX"
+        git checkout $DEFAULT_BRANCH
+        git checkout -b $FEATURE_BRANCH
+        git add bundle
+        git commit -sm "task: update bundle to $VERSION_WITH_PREFIX"
 
-        git push -u origin $FEATURE_BRANCH_NAME
+        git push -u origin $FEATURE_BRANCH
         gh pr create \
-          --head $FEATURE_BRANCH_NAME \
-          --base master \
+          --head $FEATURE_BRANCH \
+          --base $DEFAULT_BRANCH \
           --fill \
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-        gh pr merge --admin --merge $FEATURE_BRANCH_NAME  # requires repository settings to "allow auto-merge"
+        gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"
     # TODO: automate PR creation to redhat openshift certified operators
     - name: Determine if to send bundle to RedHat
       id: determine-if-to-send-bundle-to-redhat
@@ -82,38 +84,39 @@ jobs:
       with:
         # token: ${{ secrets.GITHUB_TOKEN }}  # TODO: see if the default token has sufficient permissions for *commiting*, else use `GH_TOKEN_NVIDIA_CI_CD`
         token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
-        # repository: redhat-openshift-ecosystem/certified-operators  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging  # TODO: create a fork for testing
         repository: maze88/certified-operators  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
+        # repository: redhat-openshift-ecosystem/certified-operators  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging  # TODO: create a fork for testing
         path: certified-operators
     - name: Create PR with bundle to RedHat
       if: ${{ env.SEND_BUNDLE_TO_REDHAT }}  # TODO: validate condition works (also with a `!` prefix to the condtion)
       env:
-        FEATURE_BRANCH_NAME: feature/nvidia-network-operator-bundle-${{ env.VERSION_WITHOUT_PREFIX }}
-        NEW_BUNDLE_DIR: certified-operators/operators/nvidia-network-operator/${{ env.VERSION_WITHOUT_PREFIX }}
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # TODO: see if the default token has sufficient permissions, else use `GH_TOKEN_NVIDIA_CI_CD`
-        # GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
+        DEFAULT_BRANCH: main
+        FEATURE_BRANCH: nvidia/network-operator-bundle-${{ env.VERSION_WITHOUT_PREFIX }}
+        NEW_BUNDLE_DIR: operators/nvidia-network-operator/${{ env.VERSION_WITHOUT_PREFIX }}
+        # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # TODO: see if the default token has sufficient permissions, else use `GH_TOKEN_NVIDIA_CI_CD`
+        GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
       run: |
-        echo DEBUG2 $FEATURE_BRANCH_NAME  # debug
-        pwd     # debug
-        ls -lh  # debug
+        pushd certified-operators
 
         git config user.name  nvidia-ci-cd
         git config user.email svc-cloud-orch-gh@nvidia.com
 
-        git fetch origin master
-        git checkout master
-        git checkout -b $FEATURE_BRANCH_NAME
+        # git checkout -b $FEATURE_BRANCH
         mkdir -p $NEW_BUNDLE_DIR
-        cp -r bundle/* $NEW_BUNDLE_DIR
-        git status        # debug
-        git diff --color  # debug
-        git commit -sam "feat: add nvidia/network-operator-bundle-$VERSION_WITHOUT_PREFIX"
+        cp -r ../bundle/* $NEW_BUNDLE_DIR
+        git add $NEW_BUNDLE_DIR
+        git commit -sm "feat: add nvidia/network-operator-bundle-$VERSION_WITHOUT_PREFIX"
 
-        git push -u origin $FEATURE_BRANCH_NAME
+        # TODO: setup fork for pushing to redhat's upstream
         gh pr create \
-          --repo maze88/certified-operators \
-          --head $FEATURE_BRANCH_NAME \
-          --base main \
           --fill \
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-        # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
+        # git push -u origin $FEATURE_BRANCH
+        # gh pr create \
+        #   --repo maze88/certified-operators \
+        #   --head $FEATURE_BRANCH \
+        #   --base $DEFAULT_BRANCH \
+        #   --fill \
+        #   --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+        # # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
+        popd
