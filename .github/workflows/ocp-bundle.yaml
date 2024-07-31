@@ -100,27 +100,25 @@ jobs:
 
         git config user.name  nvidia-ci-cd
         git config user.email svc-cloud-orch-gh@nvidia.com
-        git remote add upstream git@github.com:maze88/certified-operators.git
+
+        gh repo fork --remote --default-branch-only
+        gh repo sync nvidia-ci-cd/certified-operators --source maze88/certified-operators --branch $DEFAULT_BRANCH  # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
+        git remote -v  # debug
 
         git checkout -b $FEATURE_BRANCH
         mkdir -p $NEW_BUNDLE_DIR
         cp -r ../bundle/* $NEW_BUNDLE_DIR
         git add $NEW_BUNDLE_DIR
-        git commit -sm "feat: add nvidia network operator bundle $VERSION_WITHOUT_PREFIX"
+        git commit -m "feat: add nvidia network operator bundle $VERSION_WITHOUT_PREFIX"
 
+        git push -u origin $FEATURE_BRANCH
         # TODO: setup fork for pushing to redhat's upstream
         gh pr create \
           --head $FEATURE_BRANCH \
           --base $DEFAULT_BRANCH \
           --title "operator nvidia-network-operator ($VERSION_WITHOUT_PREFIX)" \
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+          # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
 
-        # git push -u origin $FEATURE_BRANCH
-        # gh pr create \
-        #   --repo maze88/certified-operators \
-        #   --head $FEATURE_BRANCH \
-        #   --base $DEFAULT_BRANCH \
-        #   --fill \
-        #   --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-        # # TODO: revert to 'redhat-openshift-ecosystem' owner before merging
+          # --repo maze88/certified-operators \
         popd
