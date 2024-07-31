@@ -107,9 +107,6 @@ jobs:
         cp -r ../bundle/* $NEW_BUNDLE_DIR
         git add $NEW_BUNDLE_DIR
         git commit -sm "feat: add nvidia network operator bundle $VERSION_WITHOUT_PREFIX"
-        git log -n 5  # debug
-        echo AAAAAAAAAAAAA
-        git diff main
 
         # TODO: setup fork for pushing to redhat's upstream
         gh pr create \
