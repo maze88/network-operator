@@ -78,7 +78,6 @@ jobs:
       if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
       with:
         token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
-        # persist-credentials: true  # TODO: check if needed
         repository: ${{ env.UPSTREAM_REPO_OWNER }}/certified-operators
         path: certified-operators
     - name: Create PR with bundle to RedHat
