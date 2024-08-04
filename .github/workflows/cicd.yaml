@@ -13,8 +13,8 @@ on:
 env:
   DEFAULT_BRANCH: feature/ocp-bundle  # TODO: revert to 'master' before merging
   REGISTRY: nvcr.io/nvstaging/mellanox
-  IMAGE_NAME: network-operator
-  PRODUCTION: false  # toggles some variables to use live/production values instead of development/demo values  # TODO: set to `true`, before merging
+  IMAGE_NAME: network-operator-test-deleteme
+  PRODUCTION: false  # toggles if some expressions will be set for live/production instead of development/demo mode  # TODO: set to `true`, before merging
 
 jobs:
   docker-build-push:
@@ -38,6 +38,8 @@ jobs:
         username: ${{ secrets.NVCR_USERNAME }}
         password: ${{ secrets.NVCR_TOKEN }}
     - name: Make build and push
+      env:
+        TAG: mellanox/${{ env.IMAGE_NAME }}
       run: |
         echo "Docker tags will be: $DOCKER_TAGS"
         for docker_tag in $DOCKER_TAGS; do
@@ -48,8 +50,6 @@ jobs:
     needs:
     - docker-build-push
     runs-on: ubuntu-latest
-    env:
-      NGC_REPO: nvstaging/mellanox/network-operator
     steps:
     - if: github.ref_name == env.DEFAULT_BRANCH || github.ref_type == 'tag'
       uses: actions/checkout@v4
@@ -57,6 +57,9 @@ jobs:
       name: Determine versions (when git branch)
       run: |
         app_version=$(git rev-parse --short HEAD)  # short git commit hash
+        if ! $PRODUCTION; then
+          app_version=$app_version-test-deleteme
+        fi
         current_chart_version=$(yq '.version' deployment/network-operator/Chart.yaml)
         echo APP_VERSION=""$app_version""                    >> $GITHUB_ENV
         echo VERSION=""$current_chart_version-$app_version"" >> $GITHUB_ENV
@@ -88,6 +91,8 @@ jobs:
         EOF
     - if: github.ref_name == env.DEFAULT_BRANCH || github.ref_type == 'tag'
       name: Make package and push
+      env:
+        NGC_REPO: nvstaging/mellanox/network-operator
       run: |
         make chart-build chart-push
     - if: github.ref_name == env.DEFAULT_BRANCH || github.ref_type == 'tag'
@@ -97,15 +102,14 @@ jobs:
         ngc config clear
 
   ocp-bundle:
-    if: true  # TODO: run conditionally only on a release tag
+    if: github.ref_type == 'tag' || true  # TODO: remove `|| true` after development
     needs:
     - docker-build-push
     runs-on: ubuntu-latest
     env:
-      BUNDLE_IMAGE_NAME: network-operator-bundle
       GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
       DOWNSTREAM_REPO_OWNER: nvidia-ci-cd
-      UPSTREAM_REPO_OWNER: ${{ env.PRODUCTION && 'redhat-openshift-ecosystem' || 'maze88' }}
+      UPSTREAM_REPO_OWNER: maze88  # TODO: revert to `redhat-openshift-ecosystem` before merging
     steps:
     - uses: actions/checkout@v4
     - name: Determine if to send bundle to RedHat
@@ -122,9 +126,12 @@ jobs:
         git_tag=${{ github.ref_name }}
         echo VERSION_WITH_PREFIX=$git_tag        >> $GITHUB_ENV
         echo VERSION_WITHOUT_PREFIX=${git_tag:1} >> $GITHUB_ENV  # without the 'v' prefix
-        ${{ env.PRODUCTION && '' || 'echo VERSION_WITH_PREFIX=v99.9.9-beta.3   >> $GITHUB_ENV' }
-        ${{ env.PRODUCTION && '' || 'echo VERSION_WITHOUT_PREFIX=99.9.9-beta.3 >> $GITHUB_ENV' }
-        ${{ env.PRODUCTION && '' || 'git_tag=v24.4.0' }
+        if ! $PRODUCTION; then
+          echo VERSION_WITH_PREFIX=v99.9.9-beta.4   >> $GITHUB_ENV
+          echo VERSION_WITHOUT_PREFIX=99.9.9-beta.4 >> $GITHUB_ENV
+          git_tag=v24.4.0  # an arbitrary existing version, just for getting a digest
+          IMAGE_NAME=network-operator
+        fi
         network_operator_digest=$(skopeo inspect docker://$REGISTRY/$IMAGE_NAME:$git_tag | jq -r .Digest)
         echo $network_operator_digest | wc -w | grep 1  # verifies value not empty
         echo NETWORK_OPERATOR_DIGEST=$network_operator_digest >> $GITHUB_ENV
@@ -134,14 +141,14 @@ jobs:
         DEFAULT_CHANNEL: ${{ env.VERSION_WITH_PREFIX }}
         CHANNELS: stable,${{ env.VERSION_WITH_PREFIX }}
         TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ env.NETWORK_OPERATOR_DIGEST }}
-        BUNDLE_IMG: ${{ env.REGISTRY }}/${{ env.BUNDLE_IMAGE_NAME }}:${{ env.VERSION_WITH_PREFIX }}${{ env.PRODUCTION && '' || '-test-safe-to-delete' }}
+        BUNDLE_IMG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-bundle:${{ env.VERSION_WITH_PREFIX }}
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
         NGC_CLI_API_KEY: ${{ secrets.NVCR_TOKEN }}
       run: |
         echo "Bundle's full tag will be: $BUNDLE_IMG"
         make bundle bundle-build bundle-push  # TODO: uncomment aple `bundle-build` and `bundle-push` targets, after development  # TODO: confirm `image` and `release-build` targets may be omitted
     - name: Commit bundle to Network-Operator
-      if: ${{ env.SEND_BUNDLE_TO_REDHAT || true }}  # TODO: remove the `true` override condition before merging
+      if: ${{ env.SEND_BUNDLE_TO_REDHAT || true }}  # TODO: remove the `|| true` override condition before merging
       env:
         FEATURE_BRANCH: update-ocp-bundle-to-${{ env.VERSION_WITH_PREFIX }}
       run: |
