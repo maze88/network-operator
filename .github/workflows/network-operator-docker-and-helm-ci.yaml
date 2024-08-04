@@ -1,12 +1,13 @@
+# TODO: remove workflow after integrated with ocp job in cicd.yaml
 name: Network Operator Docker and Helm CI
 
-on:
-  push:
-    branches:
-    - "master"
-    - "v[0-9]+.[0-9]+.x"
-    tags:
-    - "v[0-9]+.[0-9]+.[0-9]+*"
+# on:
+#   push:
+#     branches:
+#     - "master"
+#     - "v[0-9]+.[0-9]+.x"
+#     tags:
+#     - "v[0-9]+.[0-9]+.[0-9]+*"
 
 env:
   DEFAULT_BRANCH: master
