@@ -148,7 +148,7 @@ jobs:
         NGC_CLI_API_KEY: ${{ secrets.NVCR_TOKEN }}
       run: |
         echo "Bundle's full tag will be: $BUNDLE_IMG"
-        make bundle bundle-build bundle-push  # TODO: uncomment aple `bundle-build` and `bundle-push` targets, after development  # TODO: confirm `image` and `release-build` targets may be omitted
+        make bundle bundle-build bundle-push  # TODO: confirm `image` and `release-build` targets may be omitted
     - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
       name: Commit bundle to Network-Operator
       env:
@@ -161,7 +161,7 @@ jobs:
         git checkout $DEFAULT_BRANCH
         git checkout -b $FEATURE_BRANCH
         git add bundle
-        git commit -sm "task: update bundle to $VERSION_WITH_PREFIX"
+        git commit -m "task: update bundle to $VERSION_WITH_PREFIX"
 
         git push -u origin $FEATURE_BRANCH
         gh pr create \
