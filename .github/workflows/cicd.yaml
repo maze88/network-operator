@@ -5,9 +5,9 @@ on:
     branches:
     - "feature/ocp-bundle"  # TODO: remove before merging
     - "master"
-    - "v[0-9]+.[0-9]+.x"
+    - "v*.x"
     tags:
-    - "v[0-9]+.[0-9]+.[0-9]+*"
+    - "v*"
 
 # note: various environment variable names are set to match expectation from the Makefile; do not change without comparing
 env:
@@ -111,17 +111,19 @@ jobs:
       DOWNSTREAM_REPO_OWNER: nvidia-ci-cd
       UPSTREAM_REPO_OWNER: maze88  # TODO: revert to `redhat-openshift-ecosystem` before merging
     steps:
-    - uses: actions/checkout@v4
     - name: Determine if to send bundle to RedHat
-      id: determine-if-to-send-bundle-to-redhat
       run: |
-        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo false) >> $GITHUB_ENV
-    - uses: docker/login-action@v3
+        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo true) >> $GITHUB_ENV  # TODO: after development, change 2nd echo to `false`!
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+      uses: actions/checkout@v4
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+      uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ secrets.NVCR_USERNAME }}
         password: ${{ secrets.NVCR_TOKEN }}
-    - name: Determine version and tag
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+      name: Determine version and tag
       run: |
         git_tag=${{ github.ref_name }}
         echo VERSION_WITH_PREFIX=$git_tag        >> $GITHUB_ENV
@@ -135,8 +137,8 @@ jobs:
         network_operator_digest=$(skopeo inspect docker://$REGISTRY/$IMAGE_NAME:$git_tag | jq -r .Digest)
         echo $network_operator_digest | wc -w | grep 1  # verifies value not empty
         echo NETWORK_OPERATOR_DIGEST=$network_operator_digest >> $GITHUB_ENV
-    - name: Make bundle
-      id: make-bundle
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+      name: Make bundle
       env:
         DEFAULT_CHANNEL: ${{ env.VERSION_WITH_PREFIX }}
         CHANNELS: stable,${{ env.VERSION_WITH_PREFIX }}
@@ -147,8 +149,8 @@ jobs:
       run: |
         echo "Bundle's full tag will be: $BUNDLE_IMG"
         make bundle bundle-build bundle-push  # TODO: uncomment aple `bundle-build` and `bundle-push` targets, after development  # TODO: confirm `image` and `release-build` targets may be omitted
-    - name: Commit bundle to Network-Operator
-      if: ${{ env.SEND_BUNDLE_TO_REDHAT || true }}  # TODO: remove the `|| true` override condition before merging
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+      name: Commit bundle to Network-Operator
       env:
         FEATURE_BRANCH: update-ocp-bundle-to-${{ env.VERSION_WITH_PREFIX }}
       run: |
@@ -168,14 +170,14 @@ jobs:
           --fill \
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
         gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"
-    - uses: actions/checkout@v4
-      if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+      uses: actions/checkout@v4
       with:
         token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}  # token must be explicitly set here for push to work in following step
         repository: ${{ env.UPSTREAM_REPO_OWNER }}/certified-operators
         path: certified-operators
-    - name: Create PR with bundle to RedHat
-      if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+      name: Create PR with bundle to RedHat
       env:
         UPSTREAM_DEFAULT_BRANCH: main
         FEATURE_BRANCH: network-operator-bundle-${{ env.VERSION_WITHOUT_PREFIX }}
