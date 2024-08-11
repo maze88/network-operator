@@ -122,12 +122,14 @@ jobs:
         git_tag=${{ github.ref_name }}
         echo VERSION_WITH_PREFIX=$git_tag        >> $GITHUB_ENV
         echo VERSION_WITHOUT_PREFIX=${git_tag:1} >> $GITHUB_ENV  # without the 'v' prefix
+
         if ! $PRODUCTION; then
           echo VERSION_WITH_PREFIX=v99.9.9-beta.4   >> $GITHUB_ENV
           echo VERSION_WITHOUT_PREFIX=99.9.9-beta.4 >> $GITHUB_ENV
           git_tag=v24.4.0  # an arbitrary existing version, just for getting a digest
           IMAGE_NAME=network-operator
         fi
+
         network_operator_digest=$(skopeo inspect docker://$REGISTRY/$IMAGE_NAME:$git_tag | jq -r .Digest)
         echo $network_operator_digest | wc -w | grep 1  # verifies value not empty
         echo NETWORK_OPERATOR_DIGEST=$network_operator_digest >> $GITHUB_ENV
@@ -140,6 +142,13 @@ jobs:
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
         NGC_CLI_API_KEY: ${{ secrets.NVCR_TOKEN }}
       run: |
+        echo DEBUG1
+        git branch
+        echo DEBUG2
+        git checkout $DEFAULT_BRANCH
+        echo DEBUG3
+        git branch
+        echo DEBUG4
         echo "Bundle's full tag will be: $BUNDLE_IMG"
         make bundle bundle-build bundle-push
     - name: Create PR with bundle to Network Operator
@@ -161,7 +170,7 @@ jobs:
           --base $DEFAULT_BRANCH \
           --fill \
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-        # gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"
+        # gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"  # TODO: only automate this when proper tests are implemented
     - name: Determine if to send bundle to RedHat
       run: |
         echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo true) >> $GITHUB_ENV  # TODO: after development, change 2nd echo to `false`!
