@@ -142,13 +142,6 @@ jobs:
         VERSION: ${{ env.VERSION_WITHOUT_PREFIX }}
         NGC_CLI_API_KEY: ${{ secrets.NVCR_TOKEN }}
       run: |
-        echo DEBUG1
-        git branch
-        echo DEBUG2
-        git checkout $DEFAULT_BRANCH
-        echo DEBUG3
-        git branch
-        echo DEBUG4
         echo "Bundle's full tag will be: $BUNDLE_IMG"
         make bundle bundle-build bundle-push
     - name: Create PR with bundle to Network Operator
@@ -158,9 +151,14 @@ jobs:
         git config user.name  nvidia-ci-cd
         git config user.email svc-cloud-orch-gh@nvidia.com
 
-        git fetch origin $DEFAULT_BRANCH
-        git checkout $DEFAULT_BRANCH
+        # git fetch origin $DEFAULT_BRANCH  # TODO: see if this is redundant
+        # git checkout $DEFAULT_BRANCH      # TODO: see if this is redundant
         git checkout -b $FEATURE_BRANCH
+        echo DEBUG1
+        git status  # TODO: remove after debug
+        echo DEBUG2
+        git diff  --word-diff  # TODO: remove after debug
+        echo DEBUG3
         git add bundle
         git commit -m "task: update bundle to $VERSION_WITH_PREFIX"
 
