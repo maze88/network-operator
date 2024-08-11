@@ -127,8 +127,9 @@ jobs:
           echo VERSION_WITH_PREFIX=v99.9.9-beta.4   >> $GITHUB_ENV
           echo VERSION_WITHOUT_PREFIX=99.9.9-beta.4 >> $GITHUB_ENV
           git_tag=v24.4.0  # an arbitrary existing version, just for getting a digest
-          IMAGE_NAME=network-operator
-          echo IMAGE_NAME=network-operator >> $GITHUB_ENV
+          git_tag=latest  # an arbitrary existing version, just for getting a digest
+          # IMAGE_NAME=network-operator
+          # echo IMAGE_NAME=network-operator >> $GITHUB_ENV
         fi
 
         network_operator_digest=$(skopeo inspect docker://$REGISTRY/$IMAGE_NAME:$git_tag | jq -r .Digest)
