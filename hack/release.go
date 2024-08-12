@@ -210,6 +210,9 @@ func resolveImagesSha(release *Release) error {
 	v := reflect.ValueOf(*release)
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
+		if field.Kind() == reflect.String {
+			continue
+		}
 		if !field.IsNil() {
 			releaseImageSpec := field.Interface().(*ReleaseImageSpec)
 			if strings.Contains(releaseImageSpec.Image, "doca-driver") {

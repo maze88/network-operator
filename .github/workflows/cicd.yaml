@@ -3,7 +3,7 @@ name: Network Operator Docker, Helm and OCP CI
 on:
   push:
     branches:
-    - "feature/ocp-bundle"  # TODO: remove before merging
+    # - "feature/ocp-bundle"  # TODO: remove before merging
     - "master"
     - "v*.x"
     tags:
@@ -13,8 +13,8 @@ on:
 env:
   DEFAULT_BRANCH: feature/ocp-bundle  # TODO: revert to 'master' before merging
   REGISTRY: nvcr.io/nvstaging/mellanox
-  IMAGE_NAME: network-operator-test-deleteme
-  PRODUCTION: false  # toggles if some expressions will be set for live/production instead of development/demo mode  # TODO: set to `true`, before merging
+  IMAGE_NAME: network-operator
+  PRODUCTION: true  # toggles if some expressions will be set for live/production instead of development/demo mode  # TODO: set to `true`, before merging
 
 jobs:
   docker-build-push:
@@ -128,8 +128,8 @@ jobs:
           echo VERSION_WITHOUT_PREFIX=99.9.9-beta.4 >> $GITHUB_ENV
           git_tag=v24.4.0  # an arbitrary existing version, just for getting a digest
           git_tag=latest  # an arbitrary existing version, just for getting a digest
-          # IMAGE_NAME=network-operator
-          # echo IMAGE_NAME=network-operator >> $GITHUB_ENV
+          IMAGE_NAME=network-operator
+          echo IMAGE_NAME=network-operator >> $GITHUB_ENV
         fi
 
         network_operator_digest=$(skopeo inspect docker://$REGISTRY/$IMAGE_NAME:$git_tag | jq -r .Digest)
@@ -153,14 +153,8 @@ jobs:
         git config user.name  nvidia-ci-cd
         git config user.email svc-cloud-orch-gh@nvidia.com
 
-        # git fetch origin $DEFAULT_BRANCH  # TODO: see if this is redundant
-        # git checkout $DEFAULT_BRANCH      # TODO: see if this is redundant
         git checkout -b $FEATURE_BRANCH
-        echo DEBUG1
         git status  # TODO: remove after debug
-        echo DEBUG2
-        git diff  --word-diff  # TODO: remove after debug
-        echo DEBUG3
         git add bundle
         git commit -m "task: update bundle to $VERSION_WITH_PREFIX"
 
@@ -168,7 +162,7 @@ jobs:
         gh pr create \
           --head $FEATURE_BRANCH \
           --base $DEFAULT_BRANCH \
-          --fill \
+          --title "task: update bundle to $VERSION_WITH_PREFIX" \
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
         # gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"  # TODO: only automate this when proper tests are implemented
     - name: Determine if to send bundle to RedHat
