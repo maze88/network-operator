@@ -112,6 +112,8 @@ jobs:
       UPSTREAM_REPO_OWNER: maze88  # TODO: revert to `redhat-openshift-ecosystem` before merging
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 10
     - uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
@@ -154,7 +156,7 @@ jobs:
         git config user.email svc-cloud-orch-gh@nvidia.com
 
         git checkout -b $FEATURE_BRANCH
-        git status  # TODO: remove after debug
+        git status  # debug
         git add bundle
         git commit -m "task: update bundle to $VERSION_WITH_PREFIX"
 
