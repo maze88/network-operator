@@ -168,13 +168,13 @@ jobs:
     - name: Determine if to send bundle to RedHat
       run: |
         echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo false) >> $GITHUB_ENV
-    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT == 'true' }}
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}  # token must be explicitly set here for push to work in following step
         repository: ${{ env.UPSTREAM_REPO_OWNER }}/certified-operators
         path: certified-operators
-    - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT == 'true' }}
       name: Create PR with bundle to RedHat
       env:
         UPSTREAM_DEFAULT_BRANCH: main
