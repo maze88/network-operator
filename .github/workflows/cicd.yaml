@@ -146,7 +146,7 @@ jobs:
       run: |
         echo "Bundle's full tag will be: $BUNDLE_IMG"
         make bundle bundle-build bundle-push
-    - name: Create PR with bundle to Network Operator
+    - name: Create PR with bundle to Network Operator  # TODO: troubleshoot inconsistent issues with workflow permissions and intermittent failures
       env:
         FEATURE_BRANCH: update-ocp-bundle-to-${{ env.VERSION_WITH_PREFIX }}
       run: |
@@ -167,10 +167,7 @@ jobs:
         # gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"  # TODO: only auto-merge once proper tests are implemented
     - name: Determine if to send bundle to RedHat
       run: |
-        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo false) >> $GITHUB_ENV
-    - name: DEBUG
-      run: |
-        echo $SEND_BUNDLE_TO_REDHAT
+        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -qE "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo false) >> $GITHUB_ENV
     - if: ${{ env.SEND_BUNDLE_TO_REDHAT == 'true' }}
       uses: actions/checkout@v4
       with:
