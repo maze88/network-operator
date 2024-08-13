@@ -168,6 +168,9 @@ jobs:
     - name: Determine if to send bundle to RedHat
       run: |
         echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo false) >> $GITHUB_ENV
+    - name: DEBUG
+      run: |
+        echo $SEND_BUNDLE_TO_REDHAT
     - if: ${{ env.SEND_BUNDLE_TO_REDHAT == 'true' }}
       uses: actions/checkout@v4
       with:
