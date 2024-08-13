@@ -203,4 +203,4 @@ jobs:
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
 
         popd
-# TODO: once merged,  remove ~/projects/jenkins-confs/jenkins-files/network-operator/ocp-bundle-push.jenkinsfile
+# TODO: once merged, remove ~/projects/jenkins-confs/jenkins-files/network-operator/ocp-bundle-push.jenkinsfile
