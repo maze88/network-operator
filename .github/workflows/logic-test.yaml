@@ -1,0 +1,31 @@
+name: Sandbox
+
+on:
+  push:
+    branches:
+    - "feature/ocp-bundle"
+
+env:
+  DEFAULT_BRANCH: feature/ocp-bundle
+
+jobs:
+  sandbox:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
+    steps:
+    - uses: actions/checkout@v4
+    - run: echo foobundle > foobundle
+    - name: Determine if to send bundle to RedHat
+      run: |
+        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -qE "^feature/ocp-bundle$" && echo true || echo false) >> $GITHUB_ENV
+    - name: DEBUG
+      run: |
+        echo $SEND_BUNDLE_TO_REDHAT
+    - if: ${{ env.SEND_BUNDLE_TO_REDHAT == 'true' }}
+    # - if: ${{ contains(env.SEND_BUNDLE_TO_REDHAT, 'true') }}
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}  # token must be explicitly set here for push to work in following step
+        repository: maze88/certified-operators
+        path: certified-operators
