@@ -154,6 +154,7 @@ jobs:
         git config user.email svc-cloud-orch-gh@nvidia.com
 
         git checkout -b $FEATURE_BRANCH
+        git diff  # debug
         git status
         git add bundle
         git commit -m "task: update bundle to $VERSION_WITH_PREFIX"
