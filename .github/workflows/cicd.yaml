@@ -14,7 +14,7 @@ env:
   DEFAULT_BRANCH: feature/ocp-bundle  # TODO: revert to 'master' before merging
   REGISTRY: nvcr.io/nvstaging/mellanox
   IMAGE_NAME: network-operator
-  PRODUCTION: true  # toggles if some expressions will be set for live/production instead of development/demo mode  # TODO: set to `true`, before merging
+  PRODUCTION: true  # toggles if some expressions will be set for live/production instead of development/demo mode
 
 jobs:
   docker-build-push:
@@ -102,7 +102,7 @@ jobs:
         ngc config clear
 
   ocp-bundle:
-    if: github.ref_type == 'tag' || true  # TODO: remove `|| true` after development
+    if: github.ref_type == 'tag'
     needs:
     - docker-build-push
     runs-on: ubuntu-latest
@@ -154,7 +154,7 @@ jobs:
         git config user.email svc-cloud-orch-gh@nvidia.com
 
         git checkout -b $FEATURE_BRANCH
-        git status  # debug
+        git status
         git add bundle
         git commit -m "task: update bundle to $VERSION_WITH_PREFIX"
 
@@ -164,10 +164,10 @@ jobs:
           --base $DEFAULT_BRANCH \
           --title "task: update bundle to $VERSION_WITH_PREFIX" \
           --body "Created by the *${{ github.job }}* job in [${{ github.repository }} OCP bundle CI](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-        # gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"  # TODO: only automate this when proper tests are implemented
+        # gh pr merge --admin --merge $FEATURE_BRANCH  # requires repository settings to "allow auto-merge"  # TODO: only auto-merge once proper tests are implemented
     - name: Determine if to send bundle to RedHat
       run: |
-        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo true) >> $GITHUB_ENV  # TODO: after development, change 2nd echo to `false`!
+        echo SEND_BUNDLE_TO_REDHAT=$(echo ${{ github.ref_name}} | grep -E "v[0-9]+.[0-9]+.[0-9]+$" && echo true || echo false) >> $GITHUB_ENV
     - if: ${{ env.SEND_BUNDLE_TO_REDHAT }}
       uses: actions/checkout@v4
       with:
