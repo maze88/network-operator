@@ -7,7 +7,7 @@ on:
 
 jobs:
   trigger_downstream_workflow:
-    uses: Mellanox/network-operator-docs/.github/workflows/docs-ci.yaml@main
+    uses: maze88/network-operator-docs/.github/workflows/docs-ci.yaml@feature/make-docs
     with:
       token: ${{ secrets.GH_TOKEN_NVIDIA_CI_CD }}
       git_tag: ${{ github.ref_name }}
