@@ -35,9 +35,9 @@ jobs:
         TAG: mellanox/${{ env.IMAGE_NAME }}
       run: |
         echo "Docker tags will be: $DOCKER_TAGS"
-        for docker_tag in $DOCKER_TAGS; do
-          make VERSION=$docker_tag image-build-multiarch image-push-multiarch
-        done
+        # for docker_tag in $DOCKER_TAGS; do
+        # make VERSION=$docker_tag image-build-multiarch image-push-multiarch  # TODO: uncomment after testing
+        # done
     outputs:
       default_branch: ${{ env.DEFAULT_BRANCH }}  # we output this here, to use in the following job's conditioning (due to github actions environment variable scope limitations).
 
@@ -71,14 +71,15 @@ jobs:
       run: |
         git_sha=$(git rev-parse --short HEAD)  # short git commit hash
         current_chart_version=$(yq '.version' deployment/network-operator/Chart.yaml)
-        APP_VERSION=$git_sha VERSION=$current_chart_version-$git_sha make chart-build chart-push
+        APP_VERSION=$git_sha VERSION=$current_chart_version-$git_sha make chart-build #chart-push  # TODO: uncomment last goal after testing
     - name: Make package and push (`git_tag` as chart version)
       if: github.ref_type == 'tag'
       run: |
         git_tag=${{ github.ref_name }}
-        APP_VERSION=$git_tag VERSION=${git_tag:1} make chart-build chart-push  # VERSION as 'v' prefix removed
+        APP_VERSION=$git_tag VERSION=${git_tag:1} make chart-build #chart-push  # VERSION as 'v' prefix removed  # TODO: uncomment last goal after testing
 
   ocp-bundle:
+    if:  github.ref_type == 'foo'  # TODO: remove condition after testing
     needs:
     - docker-build-push
     runs-on: ubuntu-latest
